@@ -2,10 +2,24 @@
 //
 
 #include <iostream>
+#include "Recordlib/RecordAudio.h"
+
 
 int main()
 {
-    std::cout << "Hello World!\n";
+    RecordAudio R = RecordAudio();
+	std::cout << "初始化 RecordAudio" << std::endl;
+    R.InitFile("MyAudio.Audio");
+	std::cout << "初始化 MyAudio.Audio" << std::endl;
+	std::cout << "开始录制" << std::endl;
+	int i = 10;
+	while (i--)
+	{
+		R.WriteInFile(R.Record());
+		std::cout << "录制中..." << 10-i << std::endl;
+	}
+	R.CloseFile();
+	R.~RecordAudio();
 }
 
 // 运行程序: Ctrl + F5 或调试 >“开始执行(不调试)”菜单
