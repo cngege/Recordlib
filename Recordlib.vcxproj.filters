@@ -13,10 +13,27 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Recordlib">
+      <UniqueIdentifier>{5ea3f088-94f9-430f-9e17-b9b35c5982b0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Recordlib.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Recordlib\PlayAudio.cpp">
+      <Filter>Recordlib</Filter>
+    </ClCompile>
+    <ClCompile Include="Recordlib\RecordAudio.cpp">
+      <Filter>Recordlib</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Recordlib\RecordAudio.h">
+      <Filter>Recordlib</Filter>
+    </ClInclude>
+    <ClInclude Include="Recordlib\PlayAudio.h">
+      <Filter>Recordlib</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

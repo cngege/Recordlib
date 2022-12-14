@@ -127,7 +127,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Recordlib.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Recordlib\PlayAudio.cpp" />
+    <ClCompile Include="Recordlib\RecordAudio.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Recordlib\PlayAudio.h" />
+    <ClInclude Include="Recordlib\RecordAudio.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
