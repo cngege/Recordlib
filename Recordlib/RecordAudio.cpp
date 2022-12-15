@@ -43,6 +43,11 @@ BYTE* RecordAudio::Record()
 	return pBuffer1;
 }
 
+size_t RecordAudio::RecordSize()
+{
+	return wHdr1.dwBytesRecorded;
+}
+
 void RecordAudio::InitFile(const char* Path)
 {
 	//w 写  b 二进制
@@ -51,7 +56,7 @@ void RecordAudio::InitFile(const char* Path)
 
 void RecordAudio::WriteInFile(BYTE* Record)
 {
-	fwrite(Record, 1, wHdr1.dwBytesRecorded, file);
+	fwrite(Record, 1, wHdr1.dwBytesRecorded, file);				// 录制后的的字节的大小
 	delete[] Record;
 }
 

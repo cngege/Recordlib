@@ -9,6 +9,7 @@ public:
 	~RecordAudio();
 	void Resize(size_t);
 	BYTE* Record();					// 每次调用录制一秒钟,将录制的数据存储在缓存中
+	size_t RecordSize();
 	void InitFile(const char* Path);
 	void WriteInFile(BYTE* Record);
 	int CloseFile();
