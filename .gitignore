@@ -34,7 +34,11 @@
 # VS
 .vs/
 
+# Compile debug files
 x64/Debug/
 x64/Release/
 x86/Debug/
 x86/Release/
+
+# Audio files for recording tests
+MyAudio.Audio
