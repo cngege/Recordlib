@@ -2,21 +2,32 @@
 
 RecordAudio::RecordAudio()
 {
+	// 设置音频流格式
 	waveform.wFormatTag = WAVE_FORMAT_PCM;				// 录制音频的格式
-	waveform.nSamplesPerSec = 8000;						// 音频的HZ,决定了音质和录制后数据的大小
-	waveform.wBitsPerSample = 16;						// 录制音频的字节,深度
-	waveform.nChannels = 1;								// 声道
-	waveform.nAvgBytesPerSec = 16000;
-	waveform.nBlockAlign = 2;
-	waveform.cbSize = 0;
+	waveform.nSamplesPerSec = 8000;						// 采样率,决定了音质和录制后数据的大小
+	waveform.wBitsPerSample = 16;						// 录制音频的字节,深度,精度
+	waveform.nChannels = 1;								// 声道个数 1、2
+	waveform.nBlockAlign = (waveform.wBitsPerSample * waveform.nChannels) / 8;  // 块对齐
+	waveform.nAvgBytesPerSec = waveform.nBlockAlign * waveform.nSamplesPerSec;  // 传输速率
+	waveform.cbSize = 0;								// 额外空间	
 
-	wait = CreateEvent(NULL, 0, 0, NULL);
-	waveInOpen(&hWaveIn, WAVE_MAPPER, &waveform, (DWORD_PTR)wait, 0L, CALLBACK_EVENT);		// WAVE_MAPPER:录制的麦克风id -1为默认麦克风
 }
 
 RecordAudio::~RecordAudio()
 {
-	waveInClose(hWaveIn);
+	if (pBuffer1) {
+		Close();
+	}
+}
+
+void RecordAudio::Init()
+{
+	//wait = CreateEvent(NULL, 0, 0, NULL);
+	if (IsInit) {
+		return;
+	}
+	IsInit = true;
+	waveInOpen(&hWaveIn, WAVE_MAPPER, &waveform, (DWORD_PTR)(&callback), (DWORD_PTR)this, CALLBACK_FUNCTION);		// WAVE_MAPPER:录制的麦克风id -1为默认麦克风
 }
 
 void RecordAudio::Resize(size_t NewSize)
@@ -24,8 +35,12 @@ void RecordAudio::Resize(size_t NewSize)
 	bufsize = NewSize;
 }
 
-BYTE* RecordAudio::Record()
+void RecordAudio::Record()
 {
+	if (Recording) {
+		return;
+	}
+	Recording = true;
 	BYTE* pBuffer1 = new BYTE[bufsize];
 	wHdr1.lpData = (LPSTR)pBuffer1;
 	wHdr1.dwBufferLength = bufsize;
@@ -36,34 +51,138 @@ BYTE* RecordAudio::Record()
 	waveInPrepareHeader(hWaveIn, &wHdr1, sizeof(WAVEHDR));
 	waveInAddBuffer(hWaveIn, &wHdr1, sizeof(WAVEHDR));
 
-	waveInStart(hWaveIn);
-	Sleep(1000);
-	waveInReset(hWaveIn);
+	waveInStart(hWaveIn);		//表示开始录制了
 	
-	return pBuffer1;
+}
+//
+//BYTE* RecordAudio::Record(int RecordTime_ms, DWORD NewSize)
+//{
+//	BYTE* pBuffer1 = new BYTE[NewSize];
+//	wHdr1.lpData = (LPSTR)pBuffer1;
+//	wHdr1.dwBufferLength = NewSize;			// buff 大小
+//	wHdr1.dwBytesRecorded = 0;				// buff 存放大小?
+//	wHdr1.dwFlags = 0;
+//	wHdr1.dwLoops = 1;
+//
+//	waveInPrepareHeader(hWaveIn, &wHdr1, sizeof(WAVEHDR));
+//	waveInAddBuffer(hWaveIn, &wHdr1, sizeof(WAVEHDR));
+//
+//	waveInStart(hWaveIn);
+//	Sleep(RecordTime_ms);
+//	waveInReset(hWaveIn);
+//
+//	return pBuffer1;
+//}
+//
+//size_t RecordAudio::RecordSize()
+//{
+//	return wHdr1.dwBytesRecorded;
+//}
+
+void RecordAudio::Stop()
+{
+	if (!Recording) {
+		return;
+	}
+	Recording = false;
+	waveInReset(hWaveIn);
+	delete[] pBuffer1;
+	pBuffer1 = nullptr;
 }
 
-size_t RecordAudio::RecordSize()
+void RecordAudio::Close()
 {
-	return wHdr1.dwBytesRecorded;
-}
-
-void RecordAudio::InitFile(const char* Path)
-{
-	//w 写  b 二进制
-	fopen_s(&file, Path, "wb");
-}
-
-void RecordAudio::WriteInFile(BYTE* Record)
-{
-	fwrite(Record, 1, wHdr1.dwBytesRecorded, file);				// 录制后的的字节的大小
-	delete[] Record;
-}
-
-int RecordAudio::CloseFile()
-{
+	if (Recording) {
+		Stop();
+	}
 	waveInClose(hWaveIn);
-	return fclose(file);
 }
 
+bool RecordAudio::IsRecording()
+{
+	return Recording;
+}
 
+//void RecordAudio::InitFile(const char* Path)
+//{
+//	//w 写  b 二进制
+//	fopen_s(&file, Path, "wb");
+//}
+
+//void RecordAudio::WriteInFile(BYTE* Record)
+//{
+//	WriteInFile(Record, wHdr1.dwBytesRecorded);
+//}
+
+//void RecordAudio::WriteInFile(BYTE* Record,DWORD size)
+//{
+//	fwrite(Record, 1, size, file);				// 录制后的的字节的大小
+//	fflush(file);
+//	delete[] Record;
+//}
+//
+//int RecordAudio::CloseFile()
+//{
+//	waveInClose(hWaveIn);
+//	return fclose(file);
+//}
+
+void CALLBACK RecordAudio::callback(HWAVEIN   hwi,                              // 设备句柄
+	UINT      uMsg,							   // 消息
+	DWORD_PTR dwInstance,					   // 对象 this
+	DWORD_PTR dwParam1,						   // 参数1
+	DWORD_PTR dwParam2)						   // 参数2
+{
+	((RecordAudio*)dwInstance)->WaveInProcess(hwi, uMsg, dwInstance, dwParam1, dwParam2);
+}
+void RecordAudio::WaveInProcess(HWAVEIN hwi, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
+{
+	// 当前对象
+	RecordAudio* _this = (RecordAudio*)dwInstance;
+	// 获取音频头
+	WAVEHDR& pwhdr = _this->wHdr1;
+	// 处理消息
+	switch (uMsg)
+	{
+	case WIM_OPEN:      // 打开录音设备
+	{
+		//printf("成功打开设备..\n");		// 这里调用一个自定义事件
+		if (_this->OpenRecordDevice) _this->OpenRecordDevice();
+		break;
+	}
+	case WIM_DATA:      // 缓冲区已满 表示我已经录制了指定的大小的音频了
+	{
+		//这里扩充缓冲区
+		DWORD bytrecd = pwhdr.dwBytesRecorded;	// 距离上传缓冲区已满到这次录制的音频的大小
+
+		// 这里再调用一次自定义函数 将录制的音频数据传递出去
+		// 音频数据:pwhdr->lpData， 音频的大小: bytrecd
+		if(_this->HasBufferStream) _this->HasBufferStream(pwhdr.lpData, bytrecd);
+
+		if (_this->Recording) {
+			waveInAddBuffer(hwi, &pwhdr, sizeof(WAVEHDR));
+		}
+		break;
+	}
+	case WIM_CLOSE:     // 关闭录音设备
+	{
+		//printf("停止录音..\n");			// 这里调用一个自定义事件
+		if(_this->StopRecording) _this->StopRecording();
+		break;
+	}
+	default:
+		break;
+	}
+}
+void RecordAudio::onOpenRecordDeviceEvent(OpenRecordDeviceEvent e)
+{
+	OpenRecordDevice = e;
+}
+void RecordAudio::onHasBufferStreamEvent(HasBufferStreamEvent e)
+{
+	HasBufferStream = e;
+}
+void RecordAudio::onStopRecordingEvent(StopRecordingEvent e)
+{
+	StopRecording = e;
+}
