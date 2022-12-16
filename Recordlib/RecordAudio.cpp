@@ -47,28 +47,30 @@ RecordAudio::InitError RecordAudio::Init()
 	InitError ret = (InitError)waveInOpen(&hWaveIn, WAVE_MAPPER, &waveform, (DWORD_PTR)(&callback), (DWORD_PTR)this, CALLBACK_FUNCTION);		// WAVE_MAPPER:录制的麦克风id -1为默认麦克风
 	if (ret == NoError) {
 		IsInit = true;
+		BYTE* pBuffer1 = new BYTE[bufsize];
+		wHdr1.lpData = (LPSTR)pBuffer1;
+		wHdr1.dwBufferLength = bufsize;
+		wHdr1.dwBytesRecorded = 0;				// 在回调中此值表示已经录制的音频大小
+		wHdr1.dwFlags = 0;
+		wHdr1.dwLoops = 1;
 	}
 	return ret;
 }
 
-void RecordAudio::Resize(int NewSize)
+void RecordAudio::ReBuffsize(int NewSize)
 {
 	bufsize = NewSize;
 }
 
 void RecordAudio::Record()
 {
+	if (!IsInit) {
+		return;
+	}
 	if (Recording) {
 		return;
 	}
 	Recording = true;
-	BYTE* pBuffer1 = new BYTE[bufsize];
-	wHdr1.lpData = (LPSTR)pBuffer1;
-	wHdr1.dwBufferLength = bufsize;
-	wHdr1.dwBytesRecorded = 0;
-	wHdr1.dwFlags = 0;
-	wHdr1.dwLoops = 1;
-
 	waveInPrepareHeader(hWaveIn, &wHdr1, sizeof(WAVEHDR));
 	waveInAddBuffer(hWaveIn, &wHdr1, sizeof(WAVEHDR));
 
@@ -107,14 +109,16 @@ void RecordAudio::Stop()
 	}
 	Recording = false;
 	waveInReset(hWaveIn);
-	delete[] pBuffer1;
-	pBuffer1 = nullptr;
 }
 
 void RecordAudio::Close()
 {
 	if (Recording) {
 		Stop();
+	}
+	if (IsInit) {
+		delete[] pBuffer1;
+		pBuffer1 = nullptr;
 	}
 	waveInClose(hWaveIn);
 }

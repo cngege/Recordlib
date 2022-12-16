@@ -47,9 +47,13 @@ int main()
 		});
 	R.Init();
 	R.Record();
-	Sleep(1000 * 2);
+	Sleep(1000 * 10);	// 录制10s 后暂时一下
 	R.Stop();
-	
+	Sleep(1000 * 5);	// 停止录制5s 后接着录
+	R.Record();
+	Sleep(1000 * 10);	// 接着录制10s 后结束
+	R.Stop();
+
 	R.Close();
 	R.~RecordAudio();
 #endif // RECORD

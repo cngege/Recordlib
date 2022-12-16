@@ -36,7 +36,7 @@ public:
 	/// </summary>
 	/// <returns>初始化时是否发生错误</returns>
 	InitError Init();
-	void Resize(int);
+	void ReBuffsize(int);
 	void Record();
 	void Stop();
 	void Close();
