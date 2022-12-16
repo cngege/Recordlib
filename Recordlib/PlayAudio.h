@@ -20,14 +20,14 @@ public:
 	void ReadFileEnd();
 public:
 	HWAVEOUT hWaveOut;				// 打开的一个音频输出设备
-	WAVEFORMATEX waveform;
-	WAVEHDR wHdr1;
-	BYTE* pBuffer1;					// 录制的音频字节缓存处
+	WAVEFORMATEX waveform{};
+	WAVEHDR wHdr1{};
+	BYTE* pBuffer1 = nullptr;					// 录制的音频字节缓存处
 	HANDLE wait;					// 保存事件
 	
-	FILE* file;
-	char* buf;
-	int cnt;
-	int* dolength;
-	int* playsize;
+	FILE* file = nullptr;
+	char* buf = nullptr;
+	int cnt = 0;
+	int* dolength = nullptr;
+	int* playsize = nullptr;
 };

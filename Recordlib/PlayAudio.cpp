@@ -5,7 +5,7 @@ PlayAudio::PlayAudio()
 		waveform.wFormatTag = WAVE_FORMAT_PCM;				// 播放音频的格式
 		waveform.nSamplesPerSec = 8000;					// 采样率
 		waveform.wBitsPerSample = 16;						// 播放音频的字节,深度
-		waveform.nChannels = 1;								// 声道
+		waveform.nChannels = 2;								// 声道
 		waveform.nBlockAlign = (waveform.wBitsPerSample * waveform.nChannels) / 8;  // 块对齐
 		waveform.nAvgBytesPerSec = waveform.nBlockAlign * waveform.nSamplesPerSec;  // 传输速率
 		waveform.cbSize = 0;

@@ -64,9 +64,10 @@ private:
 private:
 	HWAVEIN hWaveIn{};				// 打开的一个音频输入设备
 	WAVEFORMATEX waveform{};		// 录制参数、规格 waveform.nChannels 声道个数
-	WAVEHDR wHdr1{};
-	BYTE* pBuffer1 = nullptr;		// 录制的音频字节缓存处
-	DWORD bufsize = 1024 * 15;		// 默认缓冲大小
+	WAVEHDR wHdr1{}, wHdr2{};
+	BYTE* pBuffer1 = nullptr;		// 录制的音频字节缓存处 声道1
+	BYTE* pBuffer2 = nullptr;		// 录制的音频字节缓存处 声道2
+	DWORD bufsize = 1024 * 30;		// 默认缓冲大小
 	bool Recording = false;			// 是否正在录制中
 	bool IsInit = false;			// 是否初始化过了
 
