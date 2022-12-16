@@ -14,6 +14,8 @@
 
 class RecordAudio {
 public:
+	enum InitError : int;
+public:
 	/// <summary>
 	/// 成功打开录音设备时触发
 	/// </summary>
@@ -32,19 +34,13 @@ public:
 	/// <summary>
 	/// 初始化 在初始化前 设置好录制参数 和回调事件
 	/// </summary>
-	void Init();
-	void Resize(size_t);
-	void Record();					// 每次调用录制一秒钟,将录制的数据存储在缓存中
-	//BYTE* Record(int RecordTime_ms, DWORD NewSize = 1024 * 1024);
-	//size_t RecordSize();
+	/// <returns>初始化时是否发生错误</returns>
+	InitError Init();
+	void Resize(int);
+	void Record();
 	void Stop();
 	void Close();
 	bool IsRecording();
-	//void InitFile(const char* Path);
-	//void WriteInFile(BYTE* Record);
-	//void WriteInFile(BYTE* Record, DWORD size);
-	//int CloseFile();
-
 private:
 	static void CALLBACK callback(
 		HWAVEIN   hwi,							   // 设备句柄
@@ -55,14 +51,11 @@ private:
 	void WaveInProcess(HWAVEIN hwi, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
 
 private:
-	HWAVEIN hWaveIn;				// 打开的一个音频输入设备
-	WAVEFORMATEX waveform;			// 录制参数、规格 waveform.nChannels 声道个数
-	WAVEHDR wHdr1;
-	BYTE* pBuffer1;					// 录制的音频字节缓存处
-	//HANDLE wait;					// 保存事件
-
+	HWAVEIN hWaveIn{};				// 打开的一个音频输入设备
+	WAVEFORMATEX waveform{};		// 录制参数、规格 waveform.nChannels 声道个数
+	WAVEHDR wHdr1{};
+	BYTE* pBuffer1 = nullptr;		// 录制的音频字节缓存处
 	DWORD bufsize = 1024 * 15;		// 默认缓冲大小
-	//FILE* file;
 	bool Recording = false;			// 是否正在录制中
 	bool IsInit = false;			// 是否初始化过了
 

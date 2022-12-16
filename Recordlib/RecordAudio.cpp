@@ -1,5 +1,23 @@
 #include "RecordAudio.h"
 
+
+enum RecordAudio::InitError : int {
+	// 重复初始化
+	ReInit = -1,
+	// 工作正常 没有错误
+	NoError = 0,
+	// 设备id超界
+	BadDeviceId = 2,
+	// 指定的资源已被分配
+	AllocAted = 4,
+	// 没有安装驱动程序
+	NoDriver = 6,
+	// 不能分配或锁定内存
+	NoMem = 7,
+	// 设备不支持请求的波形格式
+	BadFormat = 32
+};
+
 RecordAudio::RecordAudio()
 {
 	// 设置音频流格式
@@ -20,17 +38,20 @@ RecordAudio::~RecordAudio()
 	}
 }
 
-void RecordAudio::Init()
+RecordAudio::InitError RecordAudio::Init()
 {
 	//wait = CreateEvent(NULL, 0, 0, NULL);
 	if (IsInit) {
-		return;
+		return ReInit;
 	}
-	IsInit = true;
-	waveInOpen(&hWaveIn, WAVE_MAPPER, &waveform, (DWORD_PTR)(&callback), (DWORD_PTR)this, CALLBACK_FUNCTION);		// WAVE_MAPPER:录制的麦克风id -1为默认麦克风
+	InitError ret = (InitError)waveInOpen(&hWaveIn, WAVE_MAPPER, &waveform, (DWORD_PTR)(&callback), (DWORD_PTR)this, CALLBACK_FUNCTION);		// WAVE_MAPPER:录制的麦克风id -1为默认麦克风
+	if (ret == NoError) {
+		IsInit = true;
+	}
+	return ret;
 }
 
-void RecordAudio::Resize(size_t NewSize)
+void RecordAudio::Resize(int NewSize)
 {
 	bufsize = NewSize;
 }
@@ -103,29 +124,7 @@ bool RecordAudio::IsRecording()
 	return Recording;
 }
 
-//void RecordAudio::InitFile(const char* Path)
-//{
-//	//w 写  b 二进制
-//	fopen_s(&file, Path, "wb");
-//}
 
-//void RecordAudio::WriteInFile(BYTE* Record)
-//{
-//	WriteInFile(Record, wHdr1.dwBytesRecorded);
-//}
-
-//void RecordAudio::WriteInFile(BYTE* Record,DWORD size)
-//{
-//	fwrite(Record, 1, size, file);				// 录制后的的字节的大小
-//	fflush(file);
-//	delete[] Record;
-//}
-//
-//int RecordAudio::CloseFile()
-//{
-//	waveInClose(hWaveIn);
-//	return fclose(file);
-//}
 
 void CALLBACK RecordAudio::callback(HWAVEIN   hwi,                              // 设备句柄
 	UINT      uMsg,							   // 消息
@@ -166,7 +165,6 @@ void RecordAudio::WaveInProcess(HWAVEIN hwi, UINT uMsg, DWORD_PTR dwInstance, DW
 	}
 	case WIM_CLOSE:     // 关闭录音设备
 	{
-		//printf("停止录音..\n");			// 这里调用一个自定义事件
 		if(_this->StopRecording) _this->StopRecording();
 		break;
 	}

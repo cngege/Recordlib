@@ -12,7 +12,7 @@
 #ifdef PLAY
 #include "Recordlib/PlayAudio.h"
 #endif // PLAY
-int main2();
+void m2();
 #include <fstream>
 std::ofstream file1;
 int main()
@@ -24,7 +24,7 @@ int main()
 	//	BYTE* sound = R1.Record();
 	//	P1.Play((LPSTR)sound, R1.RecordSize());
 	//}
-	//main2();
+	//m2();
 #ifdef RECORD
 	std::cout << "录制" << std::endl;
 	RecordAudio R = RecordAudio();
@@ -47,7 +47,7 @@ int main()
 		});
 	R.Init();
 	R.Record();
-	Sleep(1000 * 20);
+	Sleep(1000 * 2);
 	R.Stop();
 	
 	R.Close();
@@ -100,14 +100,14 @@ void CALLBACK callback(HWAVEIN   hwi,          // 设备句柄
 	DWORD_PTR dwParam1,						   // 参数1
 	DWORD_PTR dwParam2);					   // 参数2
 
-int main2()
+void m2()
 {
 	HWAVEIN         hWaveIn;		        //输入设备
 	HWAVEOUT        hWaveOut;		        //输出设备
-	WAVEFORMATEX    waveform;	            //定义音频流格式
+	WAVEFORMATEX    waveform{};	            //定义音频流格式
 	BYTE* pBuffer1, * pBuffer2;				//输入音频缓冲区（左右声道）
-	WAVEHDR         whdr_i1, whdr_i2;       //输入音频头
-	WAVEHDR         whdr_o;                //输出音频头
+	WAVEHDR         whdr_i1{}, whdr_i2{};       //输入音频头
+	WAVEHDR         whdr_o{};                //输出音频头
 	USER* user = new USER();		//定义用户
 
 	// 设备数量
@@ -132,8 +132,8 @@ int main2()
 	//分配内存
 	pBuffer1 = new BYTE[1024 * 10000];
 	pBuffer2 = new BYTE[1024 * 10000];
-	memset(pBuffer1, 0, 1024 * 10000);   // 内存置0
-	memset(pBuffer2, 0, 1024 * 10000);   // 内存置0
+	memset(pBuffer1, 0, static_cast<size_t>(1024 * 10000));   // 内存置0
+	memset(pBuffer2, 0, static_cast<size_t>(1024 * 10000));   // 内存置0
 
 	// 设置音频头
 	whdr_i1.lpData = (LPSTR)pBuffer1; // 指向buffer
@@ -157,7 +157,7 @@ int main2()
 	waveInAddBuffer(hWaveIn, &whdr_i2, sizeof(WAVEHDR));    //添加buffer
 
 	waveInStart(hWaveIn);
-	getchar();
+	auto _ = getchar();
 	recurr = FALSE;
 	//waveInStop(hWaveIn);
 	waveInReset(hWaveIn);
@@ -173,7 +173,10 @@ int main2()
 	whdr_o.dwFlags = 0;
 	whdr_o.dwLoops = 1;
 
-
+	if (wait == NULL)
+	{
+		return;
+	}
 	ResetEvent(wait);
 	waveOutPrepareHeader(hWaveOut, &whdr_o, sizeof(WAVEHDR));
 	waveOutWrite(hWaveOut, &whdr_o, sizeof(WAVEHDR));
@@ -182,7 +185,6 @@ int main2()
 	if (dw == WAIT_OBJECT_0)
 	{
 		std::cout << "jieshu" << std::endl;
-		return 0;
 	}
 }
 
@@ -217,7 +219,10 @@ void CALLBACK callback(HWAVEIN   hwi,                              // 设备句�
 		hasRecorded += bytrecd;
 
 		// 缓冲扩增
-		file = (BYTE*)realloc(file, hasRecorded * sizeof(BYTE));
+		auto _file = (BYTE*)realloc(file, hasRecorded * sizeof(BYTE));
+		if (_file != nullptr) {
+			file = _file;
+		}
 		// 存储新内容
 		if (file)
 		{
