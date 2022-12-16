@@ -1,6 +1,6 @@
 // CNGEGE
 // 运行逻辑: 首先实例化类, 然后传入录制参数
-// 运行Record() 自动创建线程开始录制 并将状态Recording 设置为true
+// 运行Record() 自动开始录制 并将状态Recording 设置为true
 // 运行stop()停止录制 自动将 Recording 设置为false 这时还可以运行 Record()接着录制
 // 运行Close 关闭并销毁,释放指针，表示这个实例不再进行录制了
 
@@ -8,8 +8,6 @@
 #pragma once
 #include <Windows.h>
 #include <iostream>
-#include <thread>
-#include <functional>
 #pragma comment(lib, "winmm.lib") 
 
 class RecordAudio {
@@ -34,13 +32,26 @@ public:
 	/// <summary>
 	/// 初始化 在初始化前 设置好录制参数 和回调事件
 	/// </summary>
-	/// <returns>初始化时是否发生错误</returns>
+	/// <returns>初始化时是否发生错误,以及错误类型</returns>
 	InitError Init();
-	void ReBuffsize(int);
+	// 开始录制
 	void Record();
+	// 停止录制 暂停录制
 	void Stop();
+	// 关闭销毁释放录制设备 此实例后续不能再录制
 	void Close();
+	
+	// 是否正在录制中
 	bool IsRecording();
+	// 设置缓冲区大小, 当录制的数据到达这个大小时,将自动调用回调函数
+	void setBuffsize(int);
+	// 设置录制音频的格式 默认:WAVE_FORMAT_PCM
+	void setFormatTag(WORD);
+	// 设置采样率 默认:8000
+	void setSamplesPerSec(DWORD);
+	// 设置录制音频的精度 默认:16
+	void setBitsPerSample(WORD);
+
 private:
 	static void CALLBACK callback(
 		HWAVEIN   hwi,							   // 设备句柄

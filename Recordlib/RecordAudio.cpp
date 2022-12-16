@@ -57,10 +57,7 @@ RecordAudio::InitError RecordAudio::Init()
 	return ret;
 }
 
-void RecordAudio::ReBuffsize(int NewSize)
-{
-	bufsize = NewSize;
-}
+
 
 void RecordAudio::Record()
 {
@@ -77,30 +74,6 @@ void RecordAudio::Record()
 	waveInStart(hWaveIn);		//表示开始录制了
 	
 }
-//
-//BYTE* RecordAudio::Record(int RecordTime_ms, DWORD NewSize)
-//{
-//	BYTE* pBuffer1 = new BYTE[NewSize];
-//	wHdr1.lpData = (LPSTR)pBuffer1;
-//	wHdr1.dwBufferLength = NewSize;			// buff 大小
-//	wHdr1.dwBytesRecorded = 0;				// buff 存放大小?
-//	wHdr1.dwFlags = 0;
-//	wHdr1.dwLoops = 1;
-//
-//	waveInPrepareHeader(hWaveIn, &wHdr1, sizeof(WAVEHDR));
-//	waveInAddBuffer(hWaveIn, &wHdr1, sizeof(WAVEHDR));
-//
-//	waveInStart(hWaveIn);
-//	Sleep(RecordTime_ms);
-//	waveInReset(hWaveIn);
-//
-//	return pBuffer1;
-//}
-//
-//size_t RecordAudio::RecordSize()
-//{
-//	return wHdr1.dwBytesRecorded;
-//}
 
 void RecordAudio::Stop()
 {
@@ -128,7 +101,32 @@ bool RecordAudio::IsRecording()
 	return Recording;
 }
 
+void RecordAudio::setBuffsize(int NewSize)
+{
+	bufsize = NewSize;
+}
 
+void RecordAudio::setFormatTag(WORD tag)
+{
+	if (Init) return;
+	waveform.wFormatTag = tag;
+}
+
+void RecordAudio::setSamplesPerSec(DWORD samplesPerSec)
+{
+	if (Init) return;
+	waveform.nSamplesPerSec = samplesPerSec;
+	waveform.nAvgBytesPerSec = waveform.nBlockAlign * waveform.nSamplesPerSec;
+}
+
+void RecordAudio::setBitsPerSample(WORD bit)
+{
+	if (Init) return;
+	waveform.wBitsPerSample = bit;
+	waveform.nBlockAlign = (waveform.wBitsPerSample * waveform.nChannels) / 8;  // 块对齐
+	waveform.nAvgBytesPerSec = waveform.nBlockAlign * waveform.nSamplesPerSec;  // 传输速率
+
+}
 
 void CALLBACK RecordAudio::callback(HWAVEIN   hwi,                              // 设备句柄
 	UINT      uMsg,							   // 消息
