@@ -79,9 +79,7 @@ void RecordAudio::Record()
 	waveInPrepareHeader(hWaveIn, &wHdr2, sizeof(WAVEHDR));
 	waveInAddBuffer(hWaveIn, &wHdr1, sizeof(WAVEHDR));
 	waveInAddBuffer(hWaveIn, &wHdr2, sizeof(WAVEHDR));
-
 	waveInStart(hWaveIn);		//表示开始录制了
-	
 }
 
 void RecordAudio::Stop()
@@ -169,7 +167,7 @@ void RecordAudio::WaveInProcess(HWAVEIN hwi, UINT uMsg, DWORD_PTR dwInstance, DW
 
 		// 这里再调用一次自定义函数 将录制的音频数据传递出去
 		// 音频数据:pwhdr->lpData， 音频的大小: bytrecd
-		if(_this->HasBufferStream) _this->HasBufferStream(pwhdr->lpData, bytrecd);
+		if (_this->HasBufferStream) _this->HasBufferStream(pwhdr->lpData, bytrecd);			//bytrecd可能为0 因为有两个声道
 
 		if (_this->Recording) {
 			waveInAddBuffer(hwi, pwhdr, sizeof(WAVEHDR));
