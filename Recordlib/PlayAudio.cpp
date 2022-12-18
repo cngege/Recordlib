@@ -1,96 +1,274 @@
-#include "PlayAudio.h"
+Ôªø#include "PlayAudio.h"
+#include <thread>
 
 PlayAudio::PlayAudio()
 {
-		waveform.wFormatTag = WAVE_FORMAT_PCM;				// ≤•∑≈“Ù∆µµƒ∏Ò Ω
-		waveform.nSamplesPerSec = 8000;					// ≤…—˘¬ 
-		waveform.wBitsPerSample = 16;						// ≤•∑≈“Ù∆µµƒ◊÷Ω⁄,…Ó∂»
-		waveform.nChannels = 2;								// …˘µ¿
-		waveform.nBlockAlign = (waveform.wBitsPerSample * waveform.nChannels) / 8;  // øÈ∂‘∆Î
-		waveform.nAvgBytesPerSec = waveform.nBlockAlign * waveform.nSamplesPerSec;  // ¥´ ‰ÀŸ¬ 
+		waveform.wFormatTag = WAVE_FORMAT_PCM;				// Êí≠ÊîæÈü≥È¢ëÁöÑÊ†ºÂºè
+		waveform.nSamplesPerSec = 44100;					// ÈááÊ†∑Áéá
+		waveform.wBitsPerSample = 16;						// Êí≠ÊîæÈü≥È¢ëÁöÑÂ≠óËäÇ,Ê∑±Â∫¶
+		waveform.nChannels = 2;								// Â£∞ÈÅì
+		waveform.nBlockAlign = (waveform.wBitsPerSample * waveform.nChannels) / 8;  // ÂùóÂØπÈΩê
+		waveform.nAvgBytesPerSec = waveform.nBlockAlign * waveform.nSamplesPerSec;  // ‰º†ËæìÈÄüÁéá ÊØèÁßíÁöÑÂ≠óËäÇÊï∞
 		waveform.cbSize = 0;
-
-		wait = CreateEvent(NULL, 0, 0, NULL);
-		waveOutOpen(&hWaveOut, WAVE_MAPPER, &waveform, (DWORD_PTR)wait, 0L, CALLBACK_EVENT);		// WAVE_MAPPER:≤•∑≈µƒ…Ë±∏id -1Œ™ƒ¨»œ…Ë±∏
 }
 
 PlayAudio::~PlayAudio()
 {
-	waveOutClose(hWaveOut);
+	Close();
 }
 
-bool PlayAudio::HaveLoop()
+void PlayAudio::Init()
 {
-	return cnt > 0;
+	if (isInit) {
+		return;
+	}
+	pBufferA = new char[(size_t)buffsize + 4];
+	pBufferB = new char[(size_t)buffsize + 4];
+	waveOutOpen(&hWaveOut, WAVE_MAPPER, &waveform, (DWORD_PTR)callback, (DWORD_PTR)this, CALLBACK_FUNCTION);		// WAVE_MAPPER:Êí≠ÊîæÁöÑËÆæÂ§áid -1‰∏∫ÈªòËÆ§ËÆæÂ§á
+	isInit = true;
 }
+
+void PlayAudio::Close()
+{
+	if (!isInit) {
+		return;
+	}
+	if (pBufferA == nullptr) {
+		return;
+	}
+	isreset = true;
+	waveOutReset(hWaveOut);
+	isreset = false;
+	waveOutClose(hWaveOut);
+	delete[] pBufferA;
+	pBufferA = nullptr;
+	delete[] pBufferB;
+	pBufferB = nullptr;
+}
+
+void PlayAudio::Stop()
+{
+	if (!isInit) {
+		return;
+	}
+	if (!isPause) {
+		waveOutPause(hWaveOut);
+		isPause = true;
+	}
+}
+
+void PlayAudio::Play()
+{
+	if (!isInit) {
+		return;
+	}
+	if (isPause) {
+		waveOutRestart(hWaveOut);
+		isPause = false;
+		return;
+	}
+	if (NeedWriteData != NULL) {
+		NeedWriteData(pBufferA + 4, (int*)pBufferA);	// ÂêëÁî®Êà∑Ë∞ÉÁî®ÂáΩÊï∞ÂèñÂõûÊï∞ÊçÆ
+		//*(int*)pBufferA = buffsize;
+		wHdr1.lpData = pBufferA + 4;
+		wHdr1.dwBufferLength = *(int*)pBufferA;
+		wHdr1.dwFlags = 0;
+		wHdr1.dwLoops = 1L;
+		waveOutPrepareHeader(hWaveOut, &wHdr1, sizeof(WAVEHDR));
+		waveOutWrite(hWaveOut, &wHdr1, sizeof(WAVEHDR));
+		buffNUM = 0;
+
+		NeedWriteData(pBufferB + 4, (int*)pBufferB);	// ÂêëÁî®Êà∑Ë∞ÉÁî®ÂáΩÊï∞ÂèñÂõûÊï∞ÊçÆ
+		//*(int*)pBufferB = buffsize;
+	}
+}
+
+bool PlayAudio::IsPause()
+{
+	return isPause;
+}
+
+void PlayAudio::SetBuffSize(int size)
+{
+	if (isInit) {
+		return;
+	}
+	buffsize = size;
+}
+
+int PlayAudio::GetBuffSize()
+{
+	return buffsize;
+}
+
+//bool PlayAudio::HaveLoop()
+//{
+//	return cnt > 0;
+//}
 
 //void PlayAudio::InitFile(const char* FileName)
 //{
-//	//w –¥  b ∂˛Ω¯÷∆
+//	//w ÂÜô  b ‰∫åËøõÂà∂
 //	fopen_s(&file, FileName, "rb");
 //	buf = new char[1024 * 1024 * 4];
 //	cnt = fread(buf, sizeof(char), 1024 * 1024 * 4, file);
 //}
 
-void PlayAudio::InitFile(const char* FileName , DWORD Size)
-{
-	//w –¥  b ∂˛Ω¯÷∆
-	fopen_s(&file, FileName, "rb");
-	buf = new char[Size];
-	dolength = new int(0);
-	playsize = new int(1024);
+//void PlayAudio::InitFile(const char* FileName , DWORD Size)
+//{
+//	//w ÂÜô  b ‰∫åËøõÂà∂
+//	fopen_s(&file, FileName, "rb");
+//	buf = new char[Size];
+//	dolength = new int(0);
+//	//playsize = new int(10240*100);
+//
+//	cnt = fread(buf, sizeof(char), Size, file);
+//}
+//
+//int PlayAudio::CloseFile()
+//{
+//	delete[] buf;
+//	//delete playsize;
+//	delete dolength;
+//	waveOutClose(hWaveOut);
+//	return fclose(file);
+//}
+//
+////‰ªéÈü≥È¢ëÊµÅ‰∏≠ËØªÊé•‰∏ãÊù•ÁöÑÂ£∞Èü≥Êï∞ÊçÆ
+//LPSTR PlayAudio::ReadFile()
+//{
+//	return buf + *dolength;
+//}
+//
+//size_t PlayAudio::ReadFileSize()
+//{
+//	return buffsize;
+//}
+//
+////Êó®Âú®‰ªéInitFile Êñá‰ª∂‰∏≠Êí≠ÊîæÂ£∞Èü≥
+//void PlayAudio::Play(LPSTR PlayData)
+//{
+//	wHdr1.lpData = PlayData;
+//	wHdr1.dwBufferLength = buffsize;
+//	wHdr1.dwFlags = 0;
+//	wHdr1.dwLoops = 1L;
+//
+//	waveOutPrepareHeader(hWaveOut, &wHdr1, sizeof(WAVEHDR));
+//	waveOutWrite(hWaveOut, &wHdr1, sizeof(WAVEHDR));
+//	//WaitForSingleObject(wait, INFINITE);
+//}
+//
+////Êó®Âú®‰ªéÂ≠óËäÇÊµÅ‰∏≠Êí≠ÊîæÂ£∞Èü≥
+//void PlayAudio::Play(LPSTR PlayData, size_t PlaySize)
+//{
+//	wHdr1.lpData = PlayData;
+//	wHdr1.dwBufferLength = PlaySize;
+//	wHdr1.dwFlags = 0;
+//	wHdr1.dwLoops = 1L;
+//
+//	waveOutPrepareHeader(hWaveOut, &wHdr1, sizeof(WAVEHDR));
+//	waveOutWrite(hWaveOut, &wHdr1, sizeof(WAVEHDR));
+//	//WaitForSingleObject(wait, INFINITE);
+//}
+//
+//void PlayAudio::ReadFileEnd()
+//{
+//	*dolength = *dolength + buffsize;
+//	cnt = cnt - buffsize;
+//}
 
-	cnt = fread(buf, sizeof(char), Size, file);
+void PlayAudio::callback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
+{
+	((PlayAudio*)dwInstance)->WaveOutProcess(hwo, uMsg, dwInstance, dwParam1, dwParam2);
 }
 
-int PlayAudio::CloseFile()
+void PlayAudio::WaveOutProcess(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-	delete[] buf;
-	delete playsize;
-	delete dolength;
-	waveOutClose(hWaveOut);
-	return fclose(file);
+	PlayAudio* _this = (PlayAudio*)dwInstance;
+	LPWAVEHDR pWaveHeader= (LPWAVEHDR)dwParam1;
+	//MM_WOM_OPEN
+	if (uMsg == WOM_OPEN) {
+		//‰∫ã‰ª∂
+	}
+	if (uMsg == WOM_DONE) {
+		if (PlayDone != NULL) PlayDone();
+		pWaveHeader->dwFlags = 0;
+		if (!isreset) {
+			waveOutUnprepareHeader(hwo, pWaveHeader, sizeof(WAVEHDR));
+
+			//Ê≠§Â§ÑÂ°´ÂÖÖWAVEHDRÁöÑlpdateÁºìÂÜ≤
+			if (NeedWriteData != NULL) {
+				if (buffNUM == 0) {
+					// Ë°®Á§∫ÂΩìÊó∂Êí≠ÊîæÂÆåÁöÑÊï∞ÊçÆÊµÅÊòØ buffA
+					if (*(int*)pBufferB != 0) {
+						// È¶ñÂÖàÊí≠ÊîæbuffB
+						pWaveHeader->lpData = pBufferB + 4;
+						pWaveHeader->dwBufferLength = *(int*)pBufferB;
+						pWaveHeader->dwFlags = 0;
+						waveOutPrepareHeader(hwo, pWaveHeader, sizeof(WAVEHDR));
+						waveOutWrite(hwo, pWaveHeader, sizeof(WAVEHDR));
+						buffNUM = 1;
+
+						// ÁÑ∂ÂêéÂàõÂª∫Á∫øÁ®ã ËØªÂèñÂ≠óËäÇÁºìÂ≠òÂà∞buffA
+						std::thread readbuff([_this]() {
+							memset(_this->pBufferA, 0, (size_t)_this->buffsize + 4);
+							bool hasdata = _this->NeedWriteData(_this->pBufferA + 4, (int*)_this->pBufferA);
+							if (!hasdata) {
+								*(int*)_this->pBufferA = 0;
+							}
+						});
+						readbuff.detach();
+
+					}// pBufferB ÊúâÊïàÂ§ßÂ∞è‰∏∫0
+				}
+				else if(buffNUM == 1) {
+					// Ë°®Á§∫ÂΩìÊó∂Êí≠ÊîæÂÆåÁöÑÊï∞ÊçÆÊµÅÊòØ buffB
+					if (*(int*)pBufferA != 0) {
+						// È¶ñÂÖàÊí≠ÊîæbuffA
+						pWaveHeader->lpData = pBufferA + 4;
+						pWaveHeader->dwBufferLength = *(int*)pBufferA;
+						pWaveHeader->dwFlags = 0;
+						waveOutPrepareHeader(hwo, pWaveHeader, sizeof(WAVEHDR));
+						waveOutWrite(hwo, pWaveHeader, sizeof(WAVEHDR));
+						buffNUM = 0;
+
+						// ÁÑ∂ÂêéÂàõÂª∫Á∫øÁ®ã ËØªÂèñÂ≠óËäÇÁºìÂ≠òÂà∞buffB
+						std::thread readbuff([_this]() {
+							memset(_this->pBufferB, 0, (size_t)_this->buffsize + 4);
+							bool hasdata = _this->NeedWriteData(_this->pBufferB + 4, (int*)_this->pBufferB);
+							if (!hasdata) {
+								*(int*)_this->pBufferB = 0;
+							}
+							});
+						readbuff.detach();
+
+					}// pBufferB ÊúâÊïàÂ§ßÂ∞è‰∏∫0
+				}
+			}
+		}
+	}
+	if (uMsg == WOM_CLOSE) {
+		//‰∫ã‰ª∂
+	}
 }
 
-//¥”“Ù∆µ¡˜÷–∂¡Ω”œ¬¿¥µƒ…˘“Ù ˝æ›
-LPSTR PlayAudio::ReadFile()
+
+void PlayAudio::onOpenPlayDevice(OpenPlayDeviceEvent e)
 {
-	return buf + *dolength;
+	OpenPlayDevice = e;
 }
 
-size_t PlayAudio::ReadFileSize()
+void PlayAudio::onPlayDone(PlayDoneEvent e)
 {
-	return *playsize;
+	PlayDone = e;
 }
 
-//÷º‘⁄¥”InitFile Œƒº˛÷–≤•∑≈…˘“Ù
-void PlayAudio::Play(LPSTR PlayData)
+void PlayAudio::onNeedWriteData(NeedWriteDataEvent e)
 {
-	wHdr1.lpData = PlayData;
-	wHdr1.dwBufferLength = *playsize;
-	wHdr1.dwFlags = 0;
-	wHdr1.dwLoops = 1L;
-
-	waveOutPrepareHeader(hWaveOut, &wHdr1, sizeof(WAVEHDR));
-	waveOutWrite(hWaveOut, &wHdr1, sizeof(WAVEHDR));
-	WaitForSingleObject(wait, INFINITE);
+	NeedWriteData = e;
 }
 
-//÷º‘⁄¥”◊÷Ω⁄¡˜÷–≤•∑≈…˘“Ù
-void PlayAudio::Play(LPSTR PlayData, size_t PlaySize)
+void PlayAudio::onStopPlay(StopPlayEvent e)
 {
-	wHdr1.lpData = PlayData;
-	wHdr1.dwBufferLength = PlaySize;
-	wHdr1.dwFlags = 0;
-	wHdr1.dwLoops = 1L;
-
-	waveOutPrepareHeader(hWaveOut, &wHdr1, sizeof(WAVEHDR));
-	waveOutWrite(hWaveOut, &wHdr1, sizeof(WAVEHDR));
-	WaitForSingleObject(wait, INFINITE);
-}
-
-void PlayAudio::ReadFileEnd()
-{
-	*dolength = *dolength + *playsize;
-	cnt = cnt - *playsize;
+	StopPlay = e;
 }

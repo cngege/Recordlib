@@ -15,6 +15,7 @@
 void m2();
 #include <fstream>
 std::ofstream file1;
+std::ifstream file2;
 int main()
 {
 	//RecordAudio R1 = RecordAudio();
@@ -59,13 +60,42 @@ int main()
 
 #ifdef PLAY
 	std::cout << "播放" << std::endl;
+
 	PlayAudio P = PlayAudio();
-	P.InitFile("MyAudio.Audio"/*, 1024 * 1024 * 4*/);
-	while (P.HaveLoop()) {
-		P.Play(P.ReadFile());
-		P.ReadFileEnd();
+	//P.InitFile("MyAudio.Audio"/*, 1024 * 1024 * 4*/);
+	//while (P.HaveLoop()) {
+	//	P.Play(P.ReadFile());
+	//	P.ReadFileEnd();
+	//}
+	file2.open("MyAudio.Audio", std::ios::binary);
+	if (!file2.is_open()) {
+		std::cout << "准备播放的文件不存在." << std::endl;
+		return 0;
 	}
-	P.CloseFile();
+	P.onNeedWriteData([](LPSTR data,int* size) {
+		std::cout << "onNeedWriteData." << std::endl;
+		//char* _data = new char[1024 * 1000];
+		memset(data, 0, 1024 * 1000);
+		file2.read(data, 1024 * 1000);
+		size_t readcount = file2.gcount();
+		std::cout << "读取了数据大小:" << readcount << std::endl;
+		*size = readcount;
+		if (readcount > 0) {
+			//memcpy(data, _data, readcount);
+			//*size = readcount;
+			return true;
+		}
+		else {
+			return false;
+		}
+		//delete[] _data;
+	});
+	P.Init();
+	P.Play();
+	getchar();
+	P.Close();
+	file2.close();
+	//P.CloseFile();
 	P.~PlayAudio();
 #endif // PLAY
 
