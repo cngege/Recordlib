@@ -22,7 +22,7 @@ RecordAudio::RecordAudio()
 {
 	// 设置音频流格式
 	waveform.wFormatTag = WAVE_FORMAT_PCM;				// 录制音频的格式
-	waveform.nSamplesPerSec = 8000;						// 采样率,决定了音质和录制后数据的大小
+	waveform.nSamplesPerSec = 44100;					// 采样率,决定了音质和录制后数据的大小
 	waveform.wBitsPerSample = 16;						// 录制音频的字节,深度,精度
 	waveform.nChannels = 2;								// 声道个数 1、2
 	waveform.nBlockAlign = (waveform.wBitsPerSample * waveform.nChannels) / 8;  // 块对齐
@@ -40,15 +40,16 @@ RecordAudio::~RecordAudio()
 
 RecordAudio::InitError RecordAudio::Init()
 {
-	//wait = CreateEvent(NULL, 0, 0, NULL);
-	if (IsInit) {
+	if (isInit) {
 		return ReInit;
 	}
 	InitError ret = (InitError)waveInOpen(&hWaveIn, WAVE_MAPPER, &waveform, (DWORD_PTR)(&callback), (DWORD_PTR)this, CALLBACK_FUNCTION);		// WAVE_MAPPER:录制的麦克风id -1为默认麦克风
 	if (ret == NoError) {
-		IsInit = true;
+		isInit = true;
 		BYTE* pBuffer1 = new BYTE[bufsize];
 		BYTE* pBuffer2 = new BYTE[bufsize];
+		memset(pBuffer1, 0, bufsize);
+		memset(pBuffer2, 0, bufsize);
 		wHdr1.lpData = (LPSTR)pBuffer1;
 		wHdr1.dwBufferLength = bufsize;
 		wHdr1.dwBytesRecorded = 0;				// 在回调中此值表示已经录制的音频大小
@@ -67,7 +68,7 @@ RecordAudio::InitError RecordAudio::Init()
 
 void RecordAudio::Record()
 {
-	if (!IsInit) {
+	if (!isInit) {
 		return;
 	}
 	if (Recording) {
@@ -89,7 +90,7 @@ void RecordAudio::Stop()
 		return;
 	}
 	Recording = false;
-	waveInReset(hWaveIn);
+	waveInReset(hWaveIn); // 调用一下waveInReset，这样可以清掉尚在等待录音的缓冲区
 }
 
 void RecordAudio::Close()
@@ -97,7 +98,7 @@ void RecordAudio::Close()
 	if (Recording) {
 		Stop();
 	}
-	if (IsInit) {
+	if (isInit) {
 		delete[] pBuffer1;
 		pBuffer1 = nullptr;
 		delete[] pBuffer2;
@@ -118,20 +119,20 @@ void RecordAudio::setBuffsize(int NewSize)
 
 void RecordAudio::setFormatTag(WORD tag)
 {
-	if (IsInit) return;
+	if (isInit) return;
 	waveform.wFormatTag = tag;
 }
 
 void RecordAudio::setSamplesPerSec(DWORD samplesPerSec)
 {
-	if (IsInit) return;
+	if (isInit) return;
 	waveform.nSamplesPerSec = samplesPerSec;
 	waveform.nAvgBytesPerSec = waveform.nBlockAlign * waveform.nSamplesPerSec;
 }
 
 void RecordAudio::setBitsPerSample(WORD bit)
 {
-	if (IsInit) return;
+	if (isInit) return;
 	waveform.wBitsPerSample = bit;
 	waveform.nBlockAlign = (waveform.wBitsPerSample * waveform.nChannels) / 8;  // 块对齐
 	waveform.nAvgBytesPerSec = waveform.nBlockAlign * waveform.nSamplesPerSec;  // 传输速率

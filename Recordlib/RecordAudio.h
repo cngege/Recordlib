@@ -67,9 +67,9 @@ private:
 	WAVEHDR wHdr1{}, wHdr2{};
 	BYTE* pBuffer1 = nullptr;		// 录制的音频字节缓存处 声道1
 	BYTE* pBuffer2 = nullptr;		// 录制的音频字节缓存处 声道2
-	DWORD bufsize = 1024 * 30;		// 默认缓冲大小
+	DWORD bufsize = 1024 * 60;		// 默认缓冲大小
 	bool Recording = false;			// 是否正在录制中
-	bool IsInit = false;			// 是否初始化过了
+	bool isInit = false;			// 是否初始化过了
 
 private:
 	/// <summary>
