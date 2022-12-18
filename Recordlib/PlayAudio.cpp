@@ -241,7 +241,6 @@ void PlayAudio::WaveOutProcess(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DW
 							}
 							});
 						readbuff.detach();
-
 					}// pBufferB 有效大小为0
 				}
 			}

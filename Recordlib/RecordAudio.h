@@ -8,6 +8,7 @@
 #pragma once
 #include <Windows.h>
 #include <iostream>
+#include <functional>
 #pragma comment(lib, "winmm.lib") 
 
 class RecordAudio {
@@ -17,15 +18,15 @@ public:
 	/// <summary>
 	/// 成功打开录音设备时触发
 	/// </summary>
-	using OpenRecordDeviceEvent = void(__fastcall*)();
+	using OpenRecordDeviceEvent = std::function<void()>;
 	/// <summary>
 	/// 当录制的数据撑满了缓冲区时触发,它告诉前端用户赶紧将录制的数据拿走,接下来的录制将覆盖掉这部分的数据
 	/// </summary>
-	using HasBufferStreamEvent = void(__fastcall*)(LPSTR, DWORD);
+	using HasBufferStreamEvent = std::function<void(LPSTR, DWORD)>;
 	/// <summary>
 	/// 由设备事件发出的停止录音消息,一般在用户手动调用Stop()或Close() 后触发
 	/// </summary>
-	using StopRecordingEvent = void(__fastcall*)();
+	using StopRecordingEvent = std::function<void()>;
 public:
 	RecordAudio();
 	~RecordAudio();

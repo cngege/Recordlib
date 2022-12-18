@@ -15,7 +15,7 @@
 void m2();
 #include <fstream>
 std::ofstream file1;
-std::ifstream file2;
+
 int main()
 {
 	//RecordAudio R1 = RecordAudio();
@@ -60,7 +60,7 @@ int main()
 
 #ifdef PLAY
 	std::cout << "播放" << std::endl;
-
+	std::ifstream file2;
 	PlayAudio P = PlayAudio();
 	//P.InitFile("MyAudio.Audio"/*, 1024 * 1024 * 4*/);
 	//while (P.HaveLoop()) {
@@ -72,11 +72,13 @@ int main()
 		std::cout << "准备播放的文件不存在." << std::endl;
 		return 0;
 	}
-	P.onNeedWriteData([](LPSTR data,int* size) {
+	
+
+	P.onNeedWriteData([&file2,&P](LPSTR data,int* size) {
 		std::cout << "onNeedWriteData." << std::endl;
-		//char* _data = new char[1024 * 1000];
-		memset(data, 0, 1024 * 1000);
-		file2.read(data, 1024 * 1000);
+		//char* _data = new char[P.GetBuffSize()];
+		memset(data, 0, P.GetBuffSize());
+		file2.read(data, P.GetBuffSize());
 		size_t readcount = file2.gcount();
 		std::cout << "读取了数据大小:" << readcount << std::endl;
 		*size = readcount;
@@ -92,7 +94,7 @@ int main()
 	});
 	P.Init();
 	P.Play();
-	getchar();
+	auto _ = getchar();
 	P.Close();
 	file2.close();
 	//P.CloseFile();
@@ -112,6 +114,7 @@ int main()
 //   4. 使用错误列表窗口查看错误
 //   5. 转到“项目”>“添加新项”以创建新的代码文件，或转到“项目”>“添加现有项”以将现有代码文件添加到项目
 //   6. 将来，若要再次打开此项目，请转到“文件”>“打开”>“项目”并选择 .sln 文件
+
 
 #include <windows.h>
 #include <Mmsystem.h>

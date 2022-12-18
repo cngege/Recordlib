@@ -1,6 +1,7 @@
 #pragma once
 #include <Windows.h>
 #include <iostream>
+#include <functional>
 #pragma comment(lib, "winmm.lib") 
 
 class PlayAudio {
@@ -8,19 +9,19 @@ public:
 	/// <summary>
 	/// 开启播放设备时触发
 	/// </summary>
-	using OpenPlayDeviceEvent = void(__fastcall*)();
+	using OpenPlayDeviceEvent = std::function<void()>;
 	/// <summary>
 	/// 当前缓冲区的数据播放完成调用的事件
 	/// </summary>
-	using PlayDoneEvent = void(__fastcall*)();
+	using PlayDoneEvent = std::function<void()>;
 	/// <summary>
 	/// 表示需要写入数据，AB缓冲区,A缓冲区播放完成了，现在开始播放B缓冲区,此时回调用此事件让用户向A缓冲区中写入数据
 	/// </summary>
-	using NeedWriteDataEvent = bool(__fastcall*)(LPSTR,int*);
+	using NeedWriteDataEvent = std::function<bool(LPSTR,int*)>;
 	/// <summary>
 	/// 播放设备被关闭了 后触发
 	/// </summary>
-	using StopPlayEvent = void(__fastcall*)();
+	using StopPlayEvent = std::function<void()>;
 public:
 	PlayAudio();
 	~PlayAudio();
