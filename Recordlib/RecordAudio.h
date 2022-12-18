@@ -26,7 +26,7 @@ public:
 	/// <summary>
 	/// 由设备事件发出的停止录音消息,一般在用户手动调用Stop()或Close() 后触发
 	/// </summary>
-	using StopRecordingEvent = std::function<void()>;
+	using CloseRecordDeviceEvent = std::function<void()>;
 public:
 	RecordAudio();
 	~RecordAudio();
@@ -84,7 +84,7 @@ private:
 	/// <summary>
 	/// 由设备事件发出的停止录音消息,一般在用户手动调用Stop()或Close() 后触发
 	/// </summary>
-	StopRecordingEvent StopRecording = NULL;
+	CloseRecordDeviceEvent CloseRecordDevice = NULL;
 
 public:
 	/// <summary>
@@ -101,6 +101,6 @@ public:
 	/// 由设备事件发出的停止录音消息,一般在用户手动调用Stop()或Close() 后触发
 	/// </summary>
 	/// <param name=""></param>
-	void onStopRecordingEvent(StopRecordingEvent);
+	void onCloseRecordDeviceEvent(CloseRecordDeviceEvent);
 
 };

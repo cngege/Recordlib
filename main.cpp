@@ -4,7 +4,6 @@
 //#define RECORD
 #define PLAY
 
-#include <iostream>
 #ifdef RECORD
 #include "Recordlib/RecordAudio.h"
 #endif // RECORD
@@ -12,6 +11,7 @@
 #ifdef PLAY
 #include "Recordlib/PlayAudio.h"
 #endif // PLAY
+
 void m2();
 #include <fstream>
 std::ofstream file1;
@@ -73,32 +73,31 @@ int main()
 		return 0;
 	}
 	
+	P.onOpenPlayDevice([]() {
+		std::cout << "打开了播放设备." << std::endl;
+	});
+
+	P.onClosePlayDevice([]() {
+		std::cout << "关闭了播放设备." << std::endl;
+	});
 
 	P.onNeedWriteData([&file2,&P](LPSTR data,int* size) {
-		std::cout << "onNeedWriteData." << std::endl;
-		//char* _data = new char[P.GetBuffSize()];
-		memset(data, 0, P.GetBuffSize());
 		file2.read(data, P.GetBuffSize());
 		size_t readcount = file2.gcount();
 		std::cout << "读取了数据大小:" << readcount << std::endl;
-		*size = readcount;
+		*size = static_cast<int>(readcount);
 		if (readcount > 0) {
-			//memcpy(data, _data, readcount);
-			//*size = readcount;
 			return true;
 		}
 		else {
 			return false;
 		}
-		//delete[] _data;
 	});
 	P.Init();
 	P.Play();
 	auto _ = getchar();
 	P.Close();
 	file2.close();
-	//P.CloseFile();
-	P.~PlayAudio();
 #endif // PLAY
 
 
@@ -118,7 +117,7 @@ int main()
 
 #include <windows.h>
 #include <Mmsystem.h>
-#pragma comment(lib, "winmm.lib") 
+//#pragma comment(lib, "winmm.lib") 
 
 static BYTE* file = (BYTE*)malloc(sizeof(BYTE) * 512);
 static DWORD    hasRecorded = 0;

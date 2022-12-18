@@ -178,7 +178,7 @@ void RecordAudio::WaveInProcess(HWAVEIN hwi, UINT uMsg, DWORD_PTR dwInstance, DW
 	}
 	case WIM_CLOSE:     // ¹Ø±ÕÂ¼ÒôÉè±¸
 	{
-		if(_this->StopRecording) _this->StopRecording();
+		if(_this->CloseRecordDevice) _this->CloseRecordDevice();
 		break;
 	}
 	default:
@@ -193,7 +193,7 @@ void RecordAudio::onHasBufferStreamEvent(HasBufferStreamEvent e)
 {
 	HasBufferStream = e;
 }
-void RecordAudio::onStopRecordingEvent(StopRecordingEvent e)
+void RecordAudio::onCloseRecordDeviceEvent(CloseRecordDeviceEvent e)
 {
-	StopRecording = e;
+	CloseRecordDevice = e;
 }

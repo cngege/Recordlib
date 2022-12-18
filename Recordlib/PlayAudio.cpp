@@ -189,6 +189,7 @@ void PlayAudio::WaveOutProcess(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DW
 	//MM_WOM_OPEN
 	if (uMsg == WOM_OPEN) {
 		//事件
+		if (OpenPlayDevice != NULL) OpenPlayDevice();
 	}
 	if (uMsg == WOM_DONE) {
 		if (PlayDone != NULL) PlayDone();
@@ -248,6 +249,7 @@ void PlayAudio::WaveOutProcess(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DW
 	}
 	if (uMsg == WOM_CLOSE) {
 		//事件
+		if (ClosePlayDevice != NULL) ClosePlayDevice();
 	}
 }
 
@@ -267,7 +269,7 @@ void PlayAudio::onNeedWriteData(NeedWriteDataEvent e)
 	NeedWriteData = e;
 }
 
-void PlayAudio::onStopPlay(StopPlayEvent e)
+void PlayAudio::onClosePlayDevice(ClosePlayDeviceEvent e)
 {
-	StopPlay = e;
+	ClosePlayDevice = e;
 }

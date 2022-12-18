@@ -21,7 +21,7 @@ public:
 	/// <summary>
 	/// 播放设备被关闭了 后触发
 	/// </summary>
-	using StopPlayEvent = std::function<void()>;
+	using ClosePlayDeviceEvent = std::function<void()>;
 public:
 	PlayAudio();
 	~PlayAudio();
@@ -84,11 +84,11 @@ public:
 	void onOpenPlayDevice(OpenPlayDeviceEvent e);
 	void onPlayDone(PlayDoneEvent e);
 	void onNeedWriteData(NeedWriteDataEvent e);
-	void onStopPlay(StopPlayEvent e);
+	void onClosePlayDevice(ClosePlayDeviceEvent e);
 
 private:
 	OpenPlayDeviceEvent OpenPlayDevice = NULL;
 	PlayDoneEvent PlayDone = NULL;
 	NeedWriteDataEvent NeedWriteData = NULL;
-	StopPlayEvent StopPlay = NULL;
+	ClosePlayDeviceEvent ClosePlayDevice = NULL;
 };
