@@ -93,15 +93,17 @@ void RecordAudio::Stop()
 
 void RecordAudio::Close()
 {
+	if (!isInit) {
+		return;
+	}
 	if (Recording) {
 		Stop();
 	}
-	if (isInit) {
-		delete[] pBuffer1;
-		pBuffer1 = nullptr;
-		delete[] pBuffer2;
-		pBuffer2 = nullptr;
-	}
+	isInit = false;
+	delete[] pBuffer1;
+	pBuffer1 = nullptr;
+	delete[] pBuffer2;
+	pBuffer2 = nullptr;
 	waveInClose(hWaveIn);
 }
 

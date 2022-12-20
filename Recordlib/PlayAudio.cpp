@@ -33,9 +33,7 @@ void PlayAudio::Close()
 	if (!isInit) {
 		return;
 	}
-	if (pBufferA == nullptr) {
-		return;
-	}
+	isInit = false;
 	isreset = true;
 	waveOutReset(hWaveOut);
 	isreset = false;
@@ -184,7 +182,7 @@ void PlayAudio::WaveOutProcess(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DW
 		if (PlayDone != NULL) PlayDone();
 		pWaveHeader->dwFlags = 0;
 		if (!isreset) {
-			waveOutUnprepareHeader(hwo, pWaveHeader, sizeof(WAVEHDR));
+			//waveOutUnprepareHeader(hwo, pWaveHeader, sizeof(WAVEHDR));
 			if (buffNUM == 0) {
 				// 将自己的数据标签大小 置0
 				memset(pBufferA, 0, (size_t)buffsize + 4);

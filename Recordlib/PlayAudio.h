@@ -25,11 +25,12 @@ public:
 public:
 	PlayAudio();
 	~PlayAudio();
-
-	void Init();
-
 	/// <summary>
-	/// 立即关闭
+	/// 初始化
+	/// </summary>
+	void Init();
+	/// <summary>
+	/// 立即关闭 如果要接着使用这个类 得重新初始化
 	/// </summary>
 	void Close();
 	/// <summary>
