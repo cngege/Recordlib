@@ -1,8 +1,8 @@
 ﻿// main.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
 //
 
-#define RECORD
-//#define PLAY
+//#define RECORD
+#define PLAY
 
 #ifdef RECORD
 #include "Recordlib/RecordAudio.h"
@@ -12,10 +12,7 @@
 #include "Recordlib/PlayAudio.h"
 #endif // PLAY
 
-void m2();
 #include <fstream>
-
-
 int main()
 {
 #ifdef RECORD
@@ -48,15 +45,10 @@ int main()
 
 #ifdef PLAY
 	std::cout << "播放" << std::endl;
-	std::ifstream file2;
+	std::ifstream file_R;
 	PlayAudio P = PlayAudio();
-	//P.InitFile("MyAudio.Audio"/*, 1024 * 1024 * 4*/);
-	//while (P.HaveLoop()) {
-	//	P.Play(P.ReadFile());
-	//	P.ReadFileEnd();
-	//}
-	file2.open("MyAudio.Audio", std::ios::binary);
-	if (!file2.is_open()) {
+	file_R.open("MyAudio.Audio", std::ios::binary);
+	if (!file_R.is_open()) {
 		std::cout << "准备播放的文件不存在." << std::endl;
 		return 0;
 	}
@@ -69,11 +61,11 @@ int main()
 		std::cout << "关闭了播放设备." << std::endl;
 	});
 
-	P.onNeedWriteData([&file2,&P](LPSTR data,int* size) {
-		file2.read(data, P.GetBuffSize());
-		size_t readcount = file2.gcount();
-		std::cout << "读取了数据大小:" << readcount << std::endl;
+	P.onNeedWriteData([&file_R,&P](LPSTR data,int* size) {
+		file_R.read(data, P.getBuffSize());
+		size_t readcount = file_R.gcount();
 		*size = static_cast<int>(readcount);
+		std::cout << "读取了数据大小:" << readcount << std::endl;
 		if (readcount > 0) {
 			return true;
 		}
@@ -85,7 +77,7 @@ int main()
 	P.Play();
 	auto _ = getchar();
 	P.Close();
-	file2.close();
+	file_R.close();
 #endif // PLAY
 
 

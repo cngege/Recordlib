@@ -37,22 +37,30 @@ public:
 	/// </summary>
 	void CloseInPlayDoneAfter();
 
+	// 暂停播放
 	void Stop();
+	// 初始化后播放和暂停后播放
 	void Play();
+	// 是否是暂停播放状态
 	bool IsPause();
-	void SetBuffSize(int size);
-	int GetBuffSize();
+	// 设置缓冲区大小
+	void setBuffSize(int size);
+	// 获取缓冲区大小
+	int getBuffSize();
+	// 设置播放的音频的格式 默认:WAVE_FORMAT_PCM
+	void setFormatTag(WORD);
+	// 设置采样率 默认:44100
+	void setSamplesPerSec(DWORD);
+	// 设置录制音频的精度 默认:16
+	void setBitsPerSample(WORD);
+	/// <summary>
+	/// 向输出流中写入音频数据
+	/// </summary>
+	/// <param name="data">数据</param>
+	/// <param name="size">数据中包含音频字节的大小</param>
+	/// <returns>成功写入的数据大小</returns>
+	int WriteAudioData(LPSTR data, int size);
 
-	//bool HaveLoop();
-	////void InitFile(const char* FileName);
-	//void InitFile(const char* FileName, DWORD Size = 1024 * 1024 * 4);
-	//int CloseFile();
-
-	//LPSTR ReadFile();
-	//size_t ReadFileSize();
-	//void Play(LPSTR PlayData);
-	//void Play(LPSTR PlayData, size_t PlaySize);
-	//void ReadFileEnd();
 private:
 	static void CALLBACK callback(
 		HWAVEOUT  hwo,							   // 设备句柄
@@ -61,11 +69,6 @@ private:
 		DWORD_PTR dwParam1,						   // 参数1
 		DWORD_PTR dwParam2);					   // 参数2
 	void WaveOutProcess(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
-public:
-
-
-	bool isloop = false;
-	
 private:
 	HWAVEOUT hWaveOut;				// 打开的一个音频输出设备
 	WAVEFORMATEX waveform{};

@@ -19,11 +19,11 @@ PlayAudio::~PlayAudio()
 
 void PlayAudio::Init()
 {
-	if (isInit) {
-		return;
-	}
+	if (isInit) return;
 	pBufferA = new char[(size_t)buffsize + 4];
 	pBufferB = new char[(size_t)buffsize + 4];
+	memset(pBufferA, 0, (size_t)buffsize + 4);
+	memset(pBufferB, 0, (size_t)buffsize + 4);
 	waveOutOpen(&hWaveOut, WAVE_MAPPER, &waveform, (DWORD_PTR)callback, (DWORD_PTR)this, CALLBACK_FUNCTION);		// WAVE_MAPPER:播放的设备id -1为默认设备
 	isInit = true;
 }
@@ -88,94 +88,83 @@ bool PlayAudio::IsPause()
 	return isPause;
 }
 
-void PlayAudio::SetBuffSize(int size)
+void PlayAudio::setBuffSize(int size)
 {
-	if (isInit) {
-		return;
-	}
+	if (isInit) return;
 	buffsize = size;
 }
 
-int PlayAudio::GetBuffSize()
+int PlayAudio::getBuffSize()
 {
 	return buffsize;
 }
 
-//bool PlayAudio::HaveLoop()
-//{
-//	return cnt > 0;
-//}
+void PlayAudio::setFormatTag(WORD tag)
+{
+	if (isInit) return;
+	waveform.wFormatTag = tag;
+}
 
-//void PlayAudio::InitFile(const char* FileName)
-//{
-//	//w 写  b 二进制
-//	fopen_s(&file, FileName, "rb");
-//	buf = new char[1024 * 1024 * 4];
-//	cnt = fread(buf, sizeof(char), 1024 * 1024 * 4, file);
-//}
+void PlayAudio::setSamplesPerSec(DWORD samplesPerSec)
+{
+	if (isInit) return;
+	waveform.nSamplesPerSec = samplesPerSec;
+	waveform.nAvgBytesPerSec = waveform.nBlockAlign * waveform.nSamplesPerSec;
+}
 
-//void PlayAudio::InitFile(const char* FileName , DWORD Size)
-//{
-//	//w 写  b 二进制
-//	fopen_s(&file, FileName, "rb");
-//	buf = new char[Size];
-//	dolength = new int(0);
-//	//playsize = new int(10240*100);
-//
-//	cnt = fread(buf, sizeof(char), Size, file);
-//}
-//
-//int PlayAudio::CloseFile()
-//{
-//	delete[] buf;
-//	//delete playsize;
-//	delete dolength;
-//	waveOutClose(hWaveOut);
-//	return fclose(file);
-//}
-//
-////从音频流中读接下来的声音数据
-//LPSTR PlayAudio::ReadFile()
-//{
-//	return buf + *dolength;
-//}
-//
-//size_t PlayAudio::ReadFileSize()
-//{
-//	return buffsize;
-//}
-//
-////旨在从InitFile 文件中播放声音
-//void PlayAudio::Play(LPSTR PlayData)
-//{
-//	wHdr1.lpData = PlayData;
-//	wHdr1.dwBufferLength = buffsize;
-//	wHdr1.dwFlags = 0;
-//	wHdr1.dwLoops = 1L;
-//
-//	waveOutPrepareHeader(hWaveOut, &wHdr1, sizeof(WAVEHDR));
-//	waveOutWrite(hWaveOut, &wHdr1, sizeof(WAVEHDR));
-//	//WaitForSingleObject(wait, INFINITE);
-//}
-//
-////旨在从字节流中播放声音
-//void PlayAudio::Play(LPSTR PlayData, size_t PlaySize)
-//{
-//	wHdr1.lpData = PlayData;
-//	wHdr1.dwBufferLength = PlaySize;
-//	wHdr1.dwFlags = 0;
-//	wHdr1.dwLoops = 1L;
-//
-//	waveOutPrepareHeader(hWaveOut, &wHdr1, sizeof(WAVEHDR));
-//	waveOutWrite(hWaveOut, &wHdr1, sizeof(WAVEHDR));
-//	//WaitForSingleObject(wait, INFINITE);
-//}
-//
-//void PlayAudio::ReadFileEnd()
-//{
-//	*dolength = *dolength + buffsize;
-//	cnt = cnt - buffsize;
-//}
+void PlayAudio::setBitsPerSample(WORD bit)
+{
+	if (isInit) return;
+	waveform.wBitsPerSample = bit;
+	waveform.nBlockAlign = (waveform.wBitsPerSample * waveform.nChannels) / 8;  // 块对齐
+	waveform.nAvgBytesPerSec = waveform.nBlockAlign * waveform.nSamplesPerSec;  // 传输速率
+}
+
+int PlayAudio::WriteAudioData(LPSTR data, int size)
+{
+	if (isInit) {
+		// 正在播放缓存A
+		if (buffNUM == 0) {
+			// 那么向缓存B写入
+			// 判断缓存B是否可以写入
+			int freesize = buffsize - *(int*)pBufferB;
+			if (freesize > 0) {
+				if (size > freesize) {
+					// 将剩余的空间写满
+					memcpy(pBufferB + *(int*)pBufferB, data, freesize);
+					*(int*)pBufferB = *(int*)pBufferB + freesize;				// *(int*)pBufferB = buffsize;
+					return freesize;
+				}
+				else {
+					// 将数据全部写入
+					memcpy(pBufferB + *(int*)pBufferB, data, size);
+					*(int*)pBufferB = *(int*)pBufferB + size;
+					return size;
+				}
+			}
+		}
+		else if (buffNUM == 1) {
+			// 那么向缓存A写入
+			// 判断缓存A是否可以写入
+			int freesize = buffsize - *(int*)pBufferA;
+			if (freesize > 0) {
+				if (size > freesize) {
+					// 将剩余的空间写满
+					memcpy(pBufferA + *(int*)pBufferA, data, freesize);
+					*(int*)pBufferA = *(int*)pBufferA + freesize;				// *(int*)pBufferB = buffsize;
+					return freesize;
+				}
+				else {
+					// 将数据全部写入
+					memcpy(pBufferA + *(int*)pBufferA, data, size);
+					*(int*)pBufferA = *(int*)pBufferA + size;
+					return size;
+				}
+			}
+		}
+	}
+	return 0;
+}
 
 void PlayAudio::callback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
@@ -196,53 +185,56 @@ void PlayAudio::WaveOutProcess(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DW
 		pWaveHeader->dwFlags = 0;
 		if (!isreset) {
 			waveOutUnprepareHeader(hwo, pWaveHeader, sizeof(WAVEHDR));
+			if (buffNUM == 0) {
+				// 将自己的数据标签大小 置0
+				memset(pBufferA, 0, (size_t)buffsize + 4);
+				//*(int*)pBufferA = 0;
+				// 表示当时播放完的数据流是 buffA
+				// 首先播放buffB
+				pWaveHeader->lpData = pBufferB + 4;
+				if (*(int*)pBufferB == 0) *(int*)pBufferB = 1024 * 100;
+				pWaveHeader->dwBufferLength = *(int*)pBufferB;
+				pWaveHeader->dwFlags = 0;
+				waveOutPrepareHeader(hwo, pWaveHeader, sizeof(WAVEHDR));
+				waveOutWrite(hwo, pWaveHeader, sizeof(WAVEHDR));
+				buffNUM = 1;
 
-			//此处填充WAVEHDR的lpdate缓冲
-			if (NeedWriteData != NULL) {
-				if (buffNUM == 0) {
-					// 表示当时播放完的数据流是 buffA
-					if (*(int*)pBufferB != 0) {
-						// 首先播放buffB
-						pWaveHeader->lpData = pBufferB + 4;
-						pWaveHeader->dwBufferLength = *(int*)pBufferB;
-						pWaveHeader->dwFlags = 0;
-						waveOutPrepareHeader(hwo, pWaveHeader, sizeof(WAVEHDR));
-						waveOutWrite(hwo, pWaveHeader, sizeof(WAVEHDR));
-						buffNUM = 1;
-
-						// 然后创建线程 读取字节缓存到buffA
-						std::thread readbuff([_this]() {
-							memset(_this->pBufferA, 0, (size_t)_this->buffsize + 4);
-							bool hasdata = _this->NeedWriteData(_this->pBufferA + 4, (int*)_this->pBufferA);
-							if (!hasdata) {
-								*(int*)_this->pBufferA = 0;
-							}
+				if (NeedWriteData != NULL) {
+					// 然后创建线程 读取字节缓存到buffA
+					std::thread readbuff([_this]() {
+						//memset(_this->pBufferA, 0, (size_t)_this->buffsize + 4);
+						bool hasdata = _this->NeedWriteData(_this->pBufferA + 4, (int*)_this->pBufferA);
+						if (!hasdata) {
+							*(int*)_this->pBufferA = 0;
+						}
 						});
-						readbuff.detach();
-
-					}// pBufferB 有效大小为0
+					readbuff.detach();
 				}
-				else if(buffNUM == 1) {
-					// 表示当时播放完的数据流是 buffB
-					if (*(int*)pBufferA != 0) {
-						// 首先播放buffA
-						pWaveHeader->lpData = pBufferA + 4;
-						pWaveHeader->dwBufferLength = *(int*)pBufferA;
-						pWaveHeader->dwFlags = 0;
-						waveOutPrepareHeader(hwo, pWaveHeader, sizeof(WAVEHDR));
-						waveOutWrite(hwo, pWaveHeader, sizeof(WAVEHDR));
-						buffNUM = 0;
+			}
+			else if (buffNUM == 1) {
+				// 将刚刚播放完成的音频数据标签大小置0
+				//*(int*)pBufferB = 0;
+				memset(pBufferB, 0, (size_t)buffsize + 4);
+				// 表示当时播放完的数据流是 buffB
+				// 首先播放buffA
+				pWaveHeader->lpData = pBufferA + 4;
+				if (*(int*)pBufferA == 0) *(int*)pBufferA = 1024 * 100;
+				pWaveHeader->dwBufferLength = *(int*)pBufferA;
+				pWaveHeader->dwFlags = 0;
+				waveOutPrepareHeader(hwo, pWaveHeader, sizeof(WAVEHDR));
+				waveOutWrite(hwo, pWaveHeader, sizeof(WAVEHDR));
+				buffNUM = 0;
 
-						// 然后创建线程 读取字节缓存到buffB
-						std::thread readbuff([_this]() {
-							memset(_this->pBufferB, 0, (size_t)_this->buffsize + 4);
-							bool hasdata = _this->NeedWriteData(_this->pBufferB + 4, (int*)_this->pBufferB);
-							if (!hasdata) {
-								*(int*)_this->pBufferB = 0;
-							}
-							});
-						readbuff.detach();
-					}// pBufferB 有效大小为0
+				if (NeedWriteData != NULL) {
+					// 然后创建线程 读取字节缓存到buffB
+					std::thread readbuff([_this]() {
+						memset(_this->pBufferB, 0, (size_t)_this->buffsize + 4);
+						bool hasdata = _this->NeedWriteData(_this->pBufferB + 4, (int*)_this->pBufferB);
+						if (!hasdata) {
+							*(int*)_this->pBufferB = 0;
+						}
+						});
+					readbuff.detach();
 				}
 			}
 		}
