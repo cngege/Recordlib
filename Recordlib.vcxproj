@@ -134,8 +134,15 @@
     <ClCompile Include="Recordlib\RecordAudio.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Meet\include\error.hpp" />
+    <ClInclude Include="Meet\include\ip.hpp" />
+    <ClInclude Include="Meet\include\tcpclient.hpp" />
+    <ClInclude Include="Meet\include\tcpserver.hpp" />
     <ClInclude Include="Recordlib\PlayAudio.h" />
     <ClInclude Include="Recordlib\RecordAudio.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Meet\include\meet" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -16,6 +16,9 @@
     <Filter Include="Recordlib">
       <UniqueIdentifier>{5ea3f088-94f9-430f-9e17-b9b35c5982b0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Meet">
+      <UniqueIdentifier>{ae2933b8-560a-4a82-a995-e1bf994d8f80}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -35,5 +38,22 @@
     <ClInclude Include="Recordlib\PlayAudio.h">
       <Filter>Recordlib</Filter>
     </ClInclude>
+    <ClInclude Include="Meet\include\ip.hpp">
+      <Filter>Meet</Filter>
+    </ClInclude>
+    <ClInclude Include="Meet\include\tcpclient.hpp">
+      <Filter>Meet</Filter>
+    </ClInclude>
+    <ClInclude Include="Meet\include\tcpserver.hpp">
+      <Filter>Meet</Filter>
+    </ClInclude>
+    <ClInclude Include="Meet\include\error.hpp">
+      <Filter>Meet</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Meet\include\meet">
+      <Filter>Meet</Filter>
+    </None>
   </ItemGroup>
 </Project>

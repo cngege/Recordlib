@@ -1,85 +1,211 @@
 ﻿// main.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
 //
 
-#define RECORD
-//#define PLAY
+#include "Meet/include/meet"
 
-#ifdef RECORD
 #include "Recordlib/RecordAudio.h"
-#endif // RECORD
-
-#ifdef PLAY
 #include "Recordlib/PlayAudio.h"
-#endif // PLAY
-
 #include <fstream>
-int main()
-{
-#ifdef RECORD
+
+void RecordToFile() {
 	std::cout << "录制" << std::endl;
 	std::ofstream file1;
 	RecordAudio R = RecordAudio();
 	std::cout << "初始化 RecordAudio" << std::endl;
 	//R.InitFile("MyAudio.Audio");
 	std::cout << "初始化 MyAudio.Audio" << std::endl;
-	std::cout << "开始录制" << std::endl;
+	std::cout << "开始录制 回车键结束录制" << std::endl;
 	R.onOpenRecordDeviceEvent([&file1]() {
 		file1.open("MyAudio.Audio", std::ios::binary);
-		std::cout << "回调: 打开设备" << std::endl;
+	std::cout << "回调: 打开设备" << std::endl;
 		});
 	R.onHasBufferStreamEvent([&file1](LPSTR Stream, DWORD size) {
 		file1.write(Stream, size);
-		std::cout << "回调: 录制中... 存储了 " << size << " 字节" << std::endl;
+	std::cout << "回调: 录制中... 存储了 " << size << " 字节" << std::endl;
 		});
 
 	R.onCloseRecordDeviceEvent([&file1]() {
 		file1.close();
-		std::cout << "回调: 关闭设备" << std::endl;
+	std::cout << "回调: 关闭设备" << std::endl;
 		});
 	R.Init();
 	R.Record();
 	auto _ = getchar();
 	R.Close();
-#endif // RECORD
+	return;
+}
 
-#ifdef PLAY
+void PlayFormFile() {
 	std::cout << "播放" << std::endl;
 	std::ifstream file_R;
 	PlayAudio P = PlayAudio();
 	file_R.open("MyAudio.Audio", std::ios::binary);
 	if (!file_R.is_open()) {
 		std::cout << "准备播放的文件不存在." << std::endl;
-		return 0;
+		return;
 	}
-	
+	std::cout << "开始播放 回车键停止播放." << std::endl;
 	P.onOpenPlayDevice([]() {
 		std::cout << "打开了播放设备." << std::endl;
-	});
+		});
 
 	P.onClosePlayDevice([]() {
 		std::cout << "关闭了播放设备." << std::endl;
-	});
+		});
 
-	P.onNeedWriteData([&file_R,&P](LPSTR data,int* size) {
+	P.onNeedWriteData([&file_R, &P](LPSTR data, int* size) {
 		file_R.read(data, P.getBuffSize());
-		size_t readcount = file_R.gcount();
-		*size = static_cast<int>(readcount);
-		std::cout << "读取了数据大小:" << readcount << std::endl;
-		if (readcount > 0) {
-			return true;
-		}
-		else {
-			return false;
-		}
-	});
+	size_t readcount = file_R.gcount();
+	*size = static_cast<int>(readcount);
+	std::cout << "读取了数据大小:" << readcount << std::endl;
+	if (readcount > 0) {
+		return true;
+	}
+	else {
+		return false;
+	}
+		});
 	P.Init();
 	P.Play();
 	auto _ = getchar();
 	P.Close();
 	file_R.close();
-#endif // PLAY
+	return;
+}
 
+void StartTcpServer() {
+	// TCP服务
+	meet::TCPServer s;
+	// Record
+	RecordAudio R = RecordAudio();
+	// Play
+	PlayAudio P = PlayAudio();
 
+	USHORT port = 1234;
+	int maxconn = 1;
+	std::cout << "将监听 0.0.0.0:1234" << std::endl;
+	s.onClientDisConnect([&R, &P](meet::TCPServer::MeetClient meetClient) {
+		R.Stop();
+		P.Stop();
+		printf("\n[%s -:- %d][连接] 断开连接\n", meetClient.addr.toString().c_str(), meetClient.port);
+	});
+	s.onNewClientConnect([&R,&P](meet::TCPServer::MeetClient meetClient /*meet::IP ip, USHORT port, SOCKET socket*/) {
+		R.Record();
+		P.Play();
+		printf("\n[%s -:- %d][连接] 连接成功\n", meetClient.addr.toString().c_str(), meetClient.port);
+	});
+	s.onRecvData([&P](meet::TCPServer::MeetClient meetClient /*meet::IP ip, USHORT port, SOCKET socket*/, ULONG64 len, const char* data) {
+		P.WriteAudioData(const_cast<char*>(data), (int)len);
+	});
+	meet::Error listen_err = s.Listen(meet::IP("0.0.0.0"), port, maxconn);
+	if (listen_err != meet::Error::noError) {
+		std::cout << "监听错误:" << meet::getString(listen_err) << std::endl;
+		return;
+	}
+
+	R.onHasBufferStreamEvent([&s](LPSTR Stream, DWORD size) {
+		if (size == 0) return;
+		for (auto& c : s.GetALLClient()) {
+			s.sendData(c.clientSocket, Stream, size);
+		}
+	});
+
+	//初始化
+	R.Init();
+	P.Init();
+
+	auto _ = getchar();
+	// 首先断开所有远程连接的客户端
+	auto clientList = s.GetALLClient();
+	for (auto& c : clientList) {
+		s.disClientConnect(c.addr, c.port);
+	}
+	// 然后关闭TCPServer
+	// s.stop() 我发现了一件大事，Server好像还没有停止的接口
+
+	// 关闭麦克风 和 输出设备
+	R.Close();
+	P.Close();
+
+}
+
+void StartTcpClient() {
+	meet::TCPClient c;
+
+	// Record
+	RecordAudio R = RecordAudio();
+	// Play
+	PlayAudio P = PlayAudio();
+
+	c.onDisConnect([&P,&R]() {
+		R.Stop();
+		P.Stop();
+		std::cout << "服务端断开了连接" << std::endl;
+	});
+
+	c.onRecvData([&P](ULONG64 len, const char* data) {
+		// 接受到了音频数据 进行播放
+		P.WriteAudioData(const_cast<char*>(data), (int)len);
+	});
+
+	meet::Error connect_error;
+	R.Init();
+	P.Init();
+
+	std::cout << "输入你要连接的主机地址：";
+	std::string input;
+	std::getline(std::cin, input);
+	if ((connect_error = c.connect(meet::IP(input), 1234)) != meet::Error::noError) {
+		std::cout << "连接错误:" << meet::getString(connect_error) << std::endl;
+		return;
+	}
+
+	R.onHasBufferStreamEvent([&c](LPSTR Stream, DWORD size) {
+		if (size == 0) return;
+		if(!c.Connected) return;
+		c.sendData((char*)Stream, size);
+	});
+
+	R.Record();
+	P.Play();
+	
+	auto _ = getchar();
+	c.disConnect();
+	// 关闭麦克风 和 输出设备
+	R.Close();
+	P.Close();
+}
+
+int main()
+{
+	for (;;) {
+		//system("cls");
+		std::cout << "0. 退出" << std::endl;
+		std::cout << "1. 录制并存储" << std::endl;
+		std::cout << "2. 读文件并播放" << std::endl;
+		std::cout << "3. 监听TCP网络服务,开启语音" << std::endl;
+		std::cout << "4. 连接网络,开启语音" << std::endl;
+		std::cout << "你准备:";
+		std::string input;
+		std::getline(std::cin, input);
+		if (input == "0") {
+			break;
+		}
+		else if (input == "1") {
+			RecordToFile();
+		}
+		else if (input == "2") {
+			PlayFormFile();
+		}
+		else if (input == "3") {
+			// TODO: 监听网络
+			StartTcpServer();
+		}
+		else if (input == "4") {
+			// TODO: 连接网路
+			StartTcpClient();
+		}
+	}
 }
 
 // 运行程序: Ctrl + F5 或调试 >“开始执行(不调试)”菜单
