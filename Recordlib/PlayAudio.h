@@ -81,7 +81,7 @@ private:
 	bool isPause = false;			// 正在播放
 	bool isreset = false;
 
-	int buffsize = 1024 * 1000;		// 播放缓存大小 播放长度(比如播放5s，但是buf的数据只够播放2s,之后的数据是0,那么将播放2s后没有声音,直到再过3s后调用callback)
+	int buffsize = 1024 * 300;		// 播放缓存大小 播放长度(比如播放5s，但是buf的数据只够播放2s,之后的数据是0,那么将播放2s后没有声音,直到再过3s后调用callback)
 	int buffNUM = 0;
 
 public:
