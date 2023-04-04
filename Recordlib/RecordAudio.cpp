@@ -43,7 +43,7 @@ RecordAudio::InitError RecordAudio::Init()
 	if (isInit) {
 		return ReInit;
 	}
-	InitError ret = (InitError)waveInOpen(&hWaveIn, WAVE_MAPPER, &waveform, (DWORD_PTR)(&callback), (DWORD_PTR)this, CALLBACK_FUNCTION);		// WAVE_MAPPER:录制的麦克风id -1为默认麦克风
+	InitError ret = (InitError)waveInOpen(&hWaveIn, currentDeviceNum, &waveform, (DWORD_PTR)(&callback), (DWORD_PTR)this, CALLBACK_FUNCTION);		// WAVE_MAPPER:录制的麦克风id -1为默认麦克风
 	if (ret == NoError) {
 		isInit = true;
 		BYTE* pBuffer1 = new BYTE[bufsize];
@@ -137,6 +137,53 @@ void RecordAudio::setBitsPerSample(WORD bit)
 	waveform.nBlockAlign = (waveform.wBitsPerSample * waveform.nChannels) / 8;  // 块对齐
 	waveform.nAvgBytesPerSec = waveform.nBlockAlign * waveform.nSamplesPerSec;  // 传输速率
 
+}
+
+std::vector<WAVEINCAPS> RecordAudio::GetAllDevs()
+{
+	std::vector<WAVEINCAPS> devs;
+	UINT devsnum = waveInGetNumDevs();
+	if (devsnum == 0) {
+		return std::vector<WAVEINCAPS>();
+	}
+	else {
+		for (UINT i = 0; i < devsnum; i++) {
+			WAVEINCAPS waveIncaps;
+			MMRESULT _ = waveInGetDevCaps(i, &waveIncaps, sizeof(WAVEINCAPS));
+			devs.push_back(waveIncaps);
+		}
+		return devs;
+	}
+	
+}
+
+int RecordAudio::GetDevsNum()
+{
+	return waveInGetNumDevs();
+}
+
+WAVEINCAPS RecordAudio::GetDevsFromId(UINT id)
+{
+	WAVEINCAPS waveIncaps;
+	MMRESULT _ = waveInGetDevCaps(id, &waveIncaps, sizeof(WAVEINCAPS));
+	return waveIncaps;
+}
+
+void RecordAudio::setDevive(UINT num)
+{
+	// TODO：读取设备数量，判断是否在该值之类
+	currentDeviceNum = num;
+}
+
+WAVEINCAPS RecordAudio::getCurrentDevice()
+{
+	auto allDevs = GetAllDevs();
+	return allDevs[currentDeviceNum];
+}
+
+UINT RecordAudio::getCurrentDeviceNum()
+{
+	return currentDeviceNum;
 }
 
 void CALLBACK RecordAudio::callback(HWAVEIN   hwi,                              // 设备句柄

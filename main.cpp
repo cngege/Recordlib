@@ -7,6 +7,12 @@
 #include "Recordlib/PlayAudio.h"
 #include <fstream>
 
+#include <comdef.h> //_bstr_t
+
+// MIC 将使用的录制设备的编号
+UINT RECORD_DeviceNum = 0;
+
+
 void RecordToFile() {
 	std::cout << "录制" << std::endl;
 	std::ofstream file1;
@@ -78,6 +84,12 @@ void StartTcpServer() {
 	meet::TCPServer s;
 	// Record
 	RecordAudio R = RecordAudio();
+	R.setDevive(RECORD_DeviceNum);
+	{
+		// 显示出现在正在使用的麦克风录制设备
+		std::cout << "当前使用的麦克风设备: ";
+		std::cout << (char*)_bstr_t(R.getCurrentDevice().szPname) << std::endl;
+	}
 	// Play
 	PlayAudio P = PlayAudio();
 
@@ -95,6 +107,7 @@ void StartTcpServer() {
 		printf("\n[%s -:- %d][连接] 连接成功\n", meetClient.addr.toString().c_str(), meetClient.port);
 	});
 	s.onRecvData([&P](meet::TCPServer::MeetClient meetClient /*meet::IP ip, USHORT port, SOCKET socket*/, ULONG64 len, const char* data) {
+		//std::cout << "接受到：" << std::to_string(len) << " 字节" << std::endl;
 		P.WriteAudioData(const_cast<char*>(data), (int)len);
 	});
 	meet::Error listen_err = s.Listen(meet::IP("0.0.0.0"), port, maxconn);
@@ -134,6 +147,12 @@ void StartTcpClient() {
 
 	// Record
 	RecordAudio R = RecordAudio();
+	R.setDevive(RECORD_DeviceNum);
+	{
+		// 显示出现在正在使用的麦克风录制设备
+		std::cout << "当前使用的麦克风设备: ";
+		std::cout << (char*)_bstr_t(R.getCurrentDevice().szPname) << std::endl;
+	}
 	// Play
 	PlayAudio P = PlayAudio();
 
@@ -176,15 +195,28 @@ void StartTcpClient() {
 	P.Close();
 }
 
+
+void ShowAndSelectMic() {
+
+}
+
 int main()
 {
 	for (;;) {
+
+
+
 		//system("cls");
 		std::cout << "0. 退出" << std::endl;
 		std::cout << "1. 录制并存储" << std::endl;
 		std::cout << "2. 读文件并播放" << std::endl;
 		std::cout << "3. 监听TCP网络服务,开启语音" << std::endl;
 		std::cout << "4. 连接网络,开启语音" << std::endl;
+		std::cout << "5. 麦克风设备["<< RecordAudio::GetDevsNum() << "] 当前:";
+		{
+			std::cout << (char*)_bstr_t(RecordAudio::GetDevsFromId(RECORD_DeviceNum).szPname) << std::endl;
+		}
+		std::cout << "6. 当前使用的播放设备:" << std::endl;
 		std::cout << "你准备:";
 		std::string input;
 		std::getline(std::cin, input);
@@ -204,6 +236,11 @@ int main()
 		else if (input == "4") {
 			// TODO: 连接网路
 			StartTcpClient();
+		}
+		else if (input == "5") {
+			// TODO: 显示并允许选择一个麦克风设备
+			auto dev = RecordAudio::GetAllDevs();
+
 		}
 	}
 }

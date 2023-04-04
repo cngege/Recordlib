@@ -67,15 +67,17 @@ void PlayAudio::Play()
 	}
 	if (NeedWriteData != NULL) {
 		NeedWriteData(pBufferA + 4, (int*)pBufferA);	// 向用户调用函数取回数据
-		//*(int*)pBufferA = buffsize;
-		wHdr1.lpData = pBufferA + 4;
-		wHdr1.dwBufferLength = *(int*)pBufferA;
-		wHdr1.dwFlags = 0;
-		wHdr1.dwLoops = 1L;
-		waveOutPrepareHeader(hWaveOut, &wHdr1, sizeof(WAVEHDR));
-		waveOutWrite(hWaveOut, &wHdr1, sizeof(WAVEHDR));
-		buffNUM = 0;
+	}
+	//*(int*)pBufferA = buffsize;
+	wHdr1.lpData = pBufferA + 4;
+	wHdr1.dwBufferLength = *(int*)pBufferA;
+	wHdr1.dwFlags = 0;
+	wHdr1.dwLoops = 1L;
+	waveOutPrepareHeader(hWaveOut, &wHdr1, sizeof(WAVEHDR));
+	waveOutWrite(hWaveOut, &wHdr1, sizeof(WAVEHDR));
+	buffNUM = 0;
 
+	if (NeedWriteData != NULL) {
 		NeedWriteData(pBufferB + 4, (int*)pBufferB);	// 向用户调用函数取回数据
 		//*(int*)pBufferB = buffsize;
 	}
@@ -129,13 +131,13 @@ int PlayAudio::WriteAudioData(LPSTR data, int size)
 			if (freesize > 0) {
 				if (size > freesize) {
 					// 将剩余的空间写满
-					memcpy(pBufferB + *(int*)pBufferB, data, freesize);
+					memcpy(pBufferB + 4 + *(int*)pBufferB, data, freesize);
 					*(int*)pBufferB = *(int*)pBufferB + freesize;				// *(int*)pBufferB = buffsize;
 					return freesize;
 				}
 				else {
 					// 将数据全部写入
-					memcpy(pBufferB + *(int*)pBufferB, data, size);
+					memcpy(pBufferB + 4 + *(int*)pBufferB, data, size);
 					*(int*)pBufferB = *(int*)pBufferB + size;
 					return size;
 				}
@@ -148,13 +150,13 @@ int PlayAudio::WriteAudioData(LPSTR data, int size)
 			if (freesize > 0) {
 				if (size > freesize) {
 					// 将剩余的空间写满
-					memcpy(pBufferA + *(int*)pBufferA, data, freesize);
+					memcpy(pBufferA + 4 + *(int*)pBufferA, data, freesize);
 					*(int*)pBufferA = *(int*)pBufferA + freesize;				// *(int*)pBufferB = buffsize;
 					return freesize;
 				}
 				else {
 					// 将数据全部写入
-					memcpy(pBufferA + *(int*)pBufferA, data, size);
+					memcpy(pBufferA + 4 + *(int*)pBufferA, data, size);
 					*(int*)pBufferA = *(int*)pBufferA + size;
 					return size;
 				}

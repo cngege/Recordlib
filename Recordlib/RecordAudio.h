@@ -9,6 +9,7 @@
 #include <Windows.h>
 #include <iostream>
 #include <functional>
+#include <vector>
 #pragma comment(lib, "winmm.lib") 
 
 class RecordAudio {
@@ -53,6 +54,22 @@ public:
 	// 设置录制音频的精度 默认:16
 	void setBitsPerSample(WORD);
 
+	// 获取所有麦克风设备
+	static std::vector<WAVEINCAPS> GetAllDevs();
+	// 获取设备的音频输入设备数量
+	static int GetDevsNum();
+	// 获取一个指定编号的麦克风对象
+	static WAVEINCAPS GetDevsFromId(UINT);
+
+	//设置当前使用的麦克风设备 from WAVEINCAPS
+	//void setDevive(WAVEINCAPS);
+	//设置当前使用的麦克风设备 from Num
+	void setDevive(UINT);
+	//获取当前使用的麦克风设备
+	WAVEINCAPS getCurrentDevice();
+	//获取当前使用的麦克风设备的编号
+	UINT getCurrentDeviceNum();
+
 private:
 	static void CALLBACK callback(
 		HWAVEIN   hwi,							   // 设备句柄
@@ -71,7 +88,7 @@ private:
 	DWORD bufsize = 1024 * 120;		// 默认缓冲大小
 	bool Recording = false;			// 是否正在录制中
 	bool isInit = false;			// 是否初始化过了
-
+	UINT currentDeviceNum = WAVE_MAPPER;		// 使用麦克风设备的编号
 private:
 	/// <summary>
 	/// 当成功打开录音设备时调用
