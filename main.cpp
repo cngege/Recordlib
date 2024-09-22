@@ -11,6 +11,8 @@
 
 // MIC 将使用的录制设备的编号
 UINT RECORD_DeviceNum = 0;
+// 将使用的播放设备的编号
+UINT PLAY_DeviceNum = 0;
 
 
 void RecordToFile() {
@@ -45,6 +47,7 @@ void PlayFormFile() {
 	std::cout << "播放" << std::endl;
 	std::ifstream file_R;
 	PlayAudio P = PlayAudio();
+	P.setDevive(PLAY_DeviceNum);
 	file_R.open("MyAudio.Audio", std::ios::binary);
 	if (!file_R.is_open()) {
 		std::cout << "准备播放的文件不存在." << std::endl;
@@ -61,15 +64,15 @@ void PlayFormFile() {
 
 	P.onNeedWriteData([&file_R, &P](LPSTR data, int* size) {
 		file_R.read(data, P.getBuffSize());
-	size_t readcount = file_R.gcount();
-	*size = static_cast<int>(readcount);
-	std::cout << "读取了数据大小:" << readcount << std::endl;
-	if (readcount > 0) {
-		return true;
-	}
-	else {
-		return false;
-	}
+		size_t readcount = file_R.gcount();
+		*size = static_cast<int>(readcount);
+		std::cout << "读取了数据大小:" << readcount << std::endl;
+		if (readcount > 0) {
+			return true;
+		}
+		else {
+			return false;
+		}
 		});
 	P.Init();
 	P.Play();
@@ -204,8 +207,6 @@ int main()
 {
 	for (;;) {
 
-
-
 		//system("cls");
 		std::cout << "0. 退出" << std::endl;
 		std::cout << "1. 录制并存储" << std::endl;
@@ -214,9 +215,14 @@ int main()
 		std::cout << "4. 连接网络,开启语音" << std::endl;
 		std::cout << "5. 麦克风设备["<< RecordAudio::GetDevsNum() << "] 当前:";
 		{
+			// wchar 最大长度32，这是mmeapi 头文件限制死的
 			std::cout << (char*)_bstr_t(RecordAudio::GetDevsFromId(RECORD_DeviceNum).szPname) << std::endl;
 		}
-		std::cout << "6. 当前使用的播放设备:" << std::endl;
+		std::cout << "6. 播放设备[" << PlayAudio::GetDevsNum() << "] 当前:";
+		{
+			// wchar 最大长度32，这是mmeapi 头文件限制死的
+			std::cout << (char*)_bstr_t(PlayAudio::GetDevsFromId(PLAY_DeviceNum).szPname) << std::endl;
+		}
 		std::cout << "你准备:";
 		std::string input;
 		std::getline(std::cin, input);

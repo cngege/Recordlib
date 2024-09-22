@@ -1,8 +1,15 @@
 #pragma once
+
+#ifndef PLAYAUDIO_H
+#define PLAYAUDIO_H
+
 #include <Windows.h>
 #include <iostream>
 #include <functional>
+
+#ifndef EXTERNAL_LINK_WINMMLIB
 #pragma comment(lib, "winmm.lib") 
+#endif // !EXTERNAL_LINK_WINMMLIB
 
 class PlayAudio {
 public:
@@ -61,29 +68,49 @@ public:
 	/// <param name="size">数据中包含音频字节的大小</param>
 	/// <returns>成功写入的数据大小</returns>
 	int WriteAudioData(LPSTR data, int size);
+	//设置当前使用的麦克风设备 from Num
+	void setDevive(UINT);
+	//获取当前使用的麦克风设备
+	WAVEOUTCAPS getCurrentDevice();
+	//获取当前使用的麦克风设备的编号
+	UINT getCurrentDeviceNum();
+public:
+	// 获取所有播放设备
+	static std::vector<WAVEOUTCAPS> GetAllDevs();
+	/**
+	 * @brief 获取波形输出设备的数量
+	 * @return 
+	 */
+	static int GetDevsNum();
+	/**
+	 * @brief 获取一个指定编号的麦克风对象
+	 * @param id
+	 * @return
+	 */
+	static WAVEOUTCAPS GetDevsFromId(UINT id);
 
 private:
 	static void CALLBACK callback(
-		HWAVEOUT  hwo,							   // 设备句柄
-		UINT      uMsg,							   // 消息
-		DWORD_PTR dwInstance,					   // 对象
-		DWORD_PTR dwParam1,						   // 参数1
-		DWORD_PTR dwParam2);					   // 参数2
+		HWAVEOUT  hwo,								// 设备句柄
+		UINT      uMsg,								// 消息
+		DWORD_PTR dwInstance,						// 对象
+		DWORD_PTR dwParam1,							// 参数1
+		DWORD_PTR dwParam2);						// 参数2
 	void WaveOutProcess(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
 private:
-	HWAVEOUT hWaveOut;				// 打开的一个音频输出设备
+	HWAVEOUT hWaveOut{};							// 打开的一个音频输出设备
 	WAVEFORMATEX waveform{};
 	WAVEHDR wHdr1{};
 
-	char* pBufferA = nullptr;		// 要播放的音频字节缓存处 缓冲区A
-	char* pBufferB = nullptr;		// 要播放的音频字节缓存处 缓冲区B
-	bool isInit = false;			// 是否初始化
-	bool isPause = false;			// 正在播放
+	char* pBufferA = nullptr;						// 要播放的音频字节缓存处 缓冲区A
+	char* pBufferB = nullptr;						// 要播放的音频字节缓存处 缓冲区B
+	bool isInit = false;							// 是否初始化
+	bool isPause = false;							// 正在播放
 	bool isreset = false;
 
-	int buffsize = 1024 * 300;		// 播放缓存大小 播放长度(比如播放5s，但是buf的数据只够播放2s,之后的数据是0,那么将播放2s后没有声音,直到再过3s后调用callback)
+	int buffsize = 1024 * 300;						// 播放缓存大小 播放长度(比如播放5s，但是buf的数据只够播放2s,之后的数据是0,那么将播放2s后没有声音,直到再过3s后调用callback)
 	int buffNUM = 0;
-
+	UINT currentDeviceNum = WAVE_MAPPER;			// 使用设备的编号
 public:
 	void onOpenPlayDevice(OpenPlayDeviceEvent e);
 	void onPlayDone(PlayDoneEvent e);
@@ -96,3 +123,5 @@ private:
 	NeedWriteDataEvent NeedWriteData = NULL;
 	ClosePlayDeviceEvent ClosePlayDevice = NULL;
 };
+
+#endif // !PLAYAUDIO_H

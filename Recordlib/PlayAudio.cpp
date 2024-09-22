@@ -24,7 +24,7 @@ void PlayAudio::Init()
 	pBufferB = new char[(size_t)buffsize + 4];
 	memset(pBufferA, 0, (size_t)buffsize + 4);
 	memset(pBufferB, 0, (size_t)buffsize + 4);
-	waveOutOpen(&hWaveOut, WAVE_MAPPER, &waveform, (DWORD_PTR)callback, (DWORD_PTR)this, CALLBACK_FUNCTION);		// WAVE_MAPPER:播放的设备id -1为默认设备
+	waveOutOpen(&hWaveOut, currentDeviceNum, &waveform, (DWORD_PTR)callback, (DWORD_PTR)this, CALLBACK_FUNCTION);		// WAVE_MAPPER:播放的设备id -1为默认设备
 	isInit = true;
 }
 
@@ -165,6 +165,51 @@ int PlayAudio::WriteAudioData(LPSTR data, int size)
 	}
 	return 0;
 }
+
+void PlayAudio::setDevive(UINT id) {
+	currentDeviceNum = id;
+}
+
+WAVEOUTCAPS PlayAudio::getCurrentDevice() {
+	auto allDevs = GetAllDevs();
+	return allDevs[currentDeviceNum];
+}
+
+UINT PlayAudio::getCurrentDeviceNum() {
+	return currentDeviceNum;
+}
+
+
+
+// ----------- PUBLIC STATIC
+#pragma region PUBLIC STATIC
+std::vector<WAVEOUTCAPS> PlayAudio::GetAllDevs() {
+	std::vector<WAVEOUTCAPS> devs;
+	UINT devsnum = waveOutGetNumDevs();
+	if(devsnum == 0) {
+		return std::vector<WAVEOUTCAPS>();
+	}
+	else {
+		for(UINT i = 0; i < devsnum; i++) {
+			WAVEOUTCAPS waveOutcaps;
+			MMRESULT _ = waveOutGetDevCaps(i, &waveOutcaps, sizeof(WAVEOUTCAPS));
+			devs.push_back(waveOutcaps);
+		}
+		return devs;
+	}
+}
+
+int PlayAudio::GetDevsNum() {
+	return waveOutGetNumDevs();
+}
+
+WAVEOUTCAPS PlayAudio::GetDevsFromId(UINT id) {
+	WAVEOUTCAPS waveOutcaps;
+	MMRESULT _ = waveOutGetDevCaps(id, &waveOutcaps, sizeof(WAVEOUTCAPS));
+	return waveOutcaps;
+}
+
+#pragma endregion
 
 void PlayAudio::callback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
