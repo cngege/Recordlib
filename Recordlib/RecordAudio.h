@@ -4,13 +4,22 @@
 // 运行stop()停止录制 自动将 Recording 设置为false 这时还可以运行 Record()接着录制
 // 运行Close 关闭并销毁,释放指针，表示这个实例不再进行录制了
 
+#ifndef RECOEDAUDIO_H
+#define RECOEDAUDIO_H
+
+
+
 
 #pragma once
 #include <Windows.h>
 #include <iostream>
 #include <functional>
 #include <vector>
+
+#ifndef EXTERNAL_LINK_WINMMLIB
 #pragma comment(lib, "winmm.lib") 
+#endif // !EXTERNAL_LINK_WINMMLIB
+
 
 class RecordAudio {
 public:
@@ -121,3 +130,6 @@ public:
 	void onCloseRecordDeviceEvent(CloseRecordDeviceEvent);
 
 };
+
+
+#endif // !RECOEDAUDIO_H
