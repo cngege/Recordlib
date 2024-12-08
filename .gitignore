@@ -43,3 +43,4 @@ x86/Release/
 # Audio files for recording tests
 *.Audio
 /Recordlib/x64/Release
+*.wav

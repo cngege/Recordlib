@@ -1,246 +1,272 @@
-#include "RecordAudio.h"
+ï»¿#include "RecordAudio.h"
 
 
 enum RecordAudio::InitError : int {
-	// ÖØ¸´³õÊ¼»¯
-	ReInit = -1,
-	// ¹¤×÷Õı³£ Ã»ÓĞ´íÎó
-	NoError = 0,
-	// Éè±¸id³¬½ç
-	BadDeviceId = 2,
-	// Ö¸¶¨µÄ×ÊÔ´ÒÑ±»·ÖÅä
-	AllocAted = 4,
-	// Ã»ÓĞ°²×°Çı¶¯³ÌĞò
-	NoDriver = 6,
-	// ²»ÄÜ·ÖÅä»òËø¶¨ÄÚ´æ
-	NoMem = 7,
-	// Éè±¸²»Ö§³ÖÇëÇóµÄ²¨ĞÎ¸ñÊ½
-	BadFormat = 32
+    // é‡å¤åˆå§‹åŒ–
+    ReInit = -1,
+    // å·¥ä½œæ­£å¸¸ æ²¡æœ‰é”™è¯¯
+    NoError = 0,
+    // è®¾å¤‡idè¶…ç•Œ
+    BadDeviceId = 2,
+    // æŒ‡å®šçš„èµ„æºå·²è¢«åˆ†é…
+    AllocAted = 4,
+    // æ²¡æœ‰å®‰è£…é©±åŠ¨ç¨‹åº
+    NoDriver = 6,
+    // ä¸èƒ½åˆ†é…æˆ–é”å®šå†…å­˜
+    NoMem = 7,
+    // è®¾å¤‡ä¸æ”¯æŒè¯·æ±‚çš„æ³¢å½¢æ ¼å¼
+    BadFormat = 32
 };
 
 RecordAudio::RecordAudio()
 {
-	// ÉèÖÃÒôÆµÁ÷¸ñÊ½
-	waveform.wFormatTag = WAVE_FORMAT_PCM;				// Â¼ÖÆÒôÆµµÄ¸ñÊ½
-	waveform.nSamplesPerSec = 44100;					// ²ÉÑùÂÊ,¾ö¶¨ÁËÒôÖÊºÍÂ¼ÖÆºóÊı¾İµÄ´óĞ¡
-	waveform.wBitsPerSample = 16;						// Â¼ÖÆÒôÆµµÄ×Ö½Ú,Éî¶È,¾«¶È
-	waveform.nChannels = 2;								// ÉùµÀ¸öÊı 1¡¢2
-	waveform.nBlockAlign = (waveform.wBitsPerSample * waveform.nChannels) / 8;  // ¿é¶ÔÆë
-	waveform.nAvgBytesPerSec = waveform.nBlockAlign * waveform.nSamplesPerSec;  // ´«ÊäËÙÂÊ
-	waveform.cbSize = 0;								// ¶îÍâ¿Õ¼ä	
+    // è®¾ç½®éŸ³é¢‘æµæ ¼å¼
+    waveform.wFormatTag = WAVE_FORMAT_PCM;				// å½•åˆ¶éŸ³é¢‘çš„æ ¼å¼
+    waveform.nSamplesPerSec = 44100;					// é‡‡æ ·ç‡,å†³å®šäº†éŸ³è´¨å’Œå½•åˆ¶åæ•°æ®çš„å¤§å°
+    waveform.wBitsPerSample = 16;						// å½•åˆ¶éŸ³é¢‘çš„å­—èŠ‚,æ·±åº¦,ç²¾åº¦
+    waveform.nChannels = 2;								// å£°é“ä¸ªæ•° 1ã€2
+    waveform.nBlockAlign = (waveform.wBitsPerSample * waveform.nChannels) / 8;  // å—å¯¹é½
+    waveform.nAvgBytesPerSec = waveform.nBlockAlign * waveform.nSamplesPerSec;  // ä¼ è¾“é€Ÿç‡
+    waveform.cbSize = 0;								// é¢å¤–ç©ºé—´	
 
 }
 
 RecordAudio::~RecordAudio()
 {
-	if (pBuffer1) {
-		Close();
-	}
+    if (pBuffer1) {
+        Close();
+    }
 }
+
+USHORT RecordAudio::getFormatTag() {
+    return waveform.wFormatTag;
+}
+
+ULONG RecordAudio::getSamplesPerSec() {
+    return waveform.nSamplesPerSec;
+}
+
+USHORT RecordAudio::getBitsPerSample() {
+    return waveform.wBitsPerSample;
+}
+
+USHORT RecordAudio::getChannels() {
+    return waveform.nChannels;
+}
+
+USHORT RecordAudio::getBlockAlign() {
+    return waveform.nBlockAlign;
+}
+
+ULONG RecordAudio::getAvgBytesPerSec() {
+    return waveform.nAvgBytesPerSec;
+}
+
+
 
 RecordAudio::InitError RecordAudio::Init()
 {
-	if (isInit) {
-		return ReInit;
-	}
-	InitError ret = (InitError)waveInOpen(&hWaveIn, currentDeviceNum, &waveform, (DWORD_PTR)(&callback), (DWORD_PTR)this, CALLBACK_FUNCTION);		// WAVE_MAPPER:Â¼ÖÆµÄÂó¿Ë·çid -1ÎªÄ¬ÈÏÂó¿Ë·ç
-	if (ret == NoError) {
-		isInit = true;
-		BYTE* pBuffer1 = new BYTE[bufsize];
-		BYTE* pBuffer2 = new BYTE[bufsize];
-		memset(pBuffer1, 0, bufsize);
-		memset(pBuffer2, 0, bufsize);
-		wHdr1.lpData = (LPSTR)pBuffer1;
-		wHdr1.dwBufferLength = bufsize;
-		wHdr1.dwBytesRecorded = 0;				// ÔÚ»Øµ÷ÖĞ´ËÖµ±íÊ¾ÒÑ¾­Â¼ÖÆµÄÒôÆµ´óĞ¡
-		wHdr1.dwFlags = 0;
-		wHdr1.dwLoops = 1;
-		wHdr2.lpData = (LPSTR)pBuffer2;
-		wHdr2.dwBufferLength = bufsize;
-		wHdr2.dwBytesRecorded = 0;				// ÔÚ»Øµ÷ÖĞ´ËÖµ±íÊ¾ÒÑ¾­Â¼ÖÆµÄÒôÆµ´óĞ¡
-		wHdr2.dwFlags = 0;
-		wHdr2.dwLoops = 1;
-	}
-	return ret;
+    if (isInit) {
+        return ReInit;
+    }
+    InitError ret = (InitError)waveInOpen(&hWaveIn, currentDeviceNum, &waveform, (DWORD_PTR)(&callback), (DWORD_PTR)this, CALLBACK_FUNCTION);		// WAVE_MAPPER:å½•åˆ¶çš„éº¦å…‹é£id -1ä¸ºé»˜è®¤éº¦å…‹é£
+    if (ret == NoError) {
+        isInit = true;
+        BYTE* pBuffer1 = new BYTE[bufsize];
+        BYTE* pBuffer2 = new BYTE[bufsize];
+        memset(pBuffer1, 0, bufsize);
+        memset(pBuffer2, 0, bufsize);
+        wHdr1.lpData = (LPSTR)pBuffer1;
+        wHdr1.dwBufferLength = bufsize;
+        wHdr1.dwBytesRecorded = 0;				// åœ¨å›è°ƒä¸­æ­¤å€¼è¡¨ç¤ºå·²ç»å½•åˆ¶çš„éŸ³é¢‘å¤§å°
+        wHdr1.dwFlags = 0;
+        wHdr1.dwLoops = 1;
+        wHdr2.lpData = (LPSTR)pBuffer2;
+        wHdr2.dwBufferLength = bufsize;
+        wHdr2.dwBytesRecorded = 0;				// åœ¨å›è°ƒä¸­æ­¤å€¼è¡¨ç¤ºå·²ç»å½•åˆ¶çš„éŸ³é¢‘å¤§å°
+        wHdr2.dwFlags = 0;
+        wHdr2.dwLoops = 1;
+    }
+    return ret;
 }
 
 
 
 void RecordAudio::Record()
 {
-	if (!isInit) {
-		return;
-	}
-	if (Recording) {
-		return;
-	}
-	Recording = true;
-	waveInPrepareHeader(hWaveIn, &wHdr1, sizeof(WAVEHDR));
-	waveInPrepareHeader(hWaveIn, &wHdr2, sizeof(WAVEHDR));
-	waveInAddBuffer(hWaveIn, &wHdr1, sizeof(WAVEHDR));
-	waveInAddBuffer(hWaveIn, &wHdr2, sizeof(WAVEHDR));
-	waveInStart(hWaveIn);		//±íÊ¾¿ªÊ¼Â¼ÖÆÁË
+    if (!isInit) {
+        return;
+    }
+    if (Recording) {
+        return;
+    }
+    Recording = true;
+    waveInPrepareHeader(hWaveIn, &wHdr1, sizeof(WAVEHDR));
+    waveInPrepareHeader(hWaveIn, &wHdr2, sizeof(WAVEHDR));
+    waveInAddBuffer(hWaveIn, &wHdr1, sizeof(WAVEHDR));
+    waveInAddBuffer(hWaveIn, &wHdr2, sizeof(WAVEHDR));
+    waveInStart(hWaveIn);		//è¡¨ç¤ºå¼€å§‹å½•åˆ¶äº†
 }
 
 void RecordAudio::Stop()
 {
-	if (!Recording) {
-		return;
-	}
-	Recording = false;
-	waveInReset(hWaveIn); // µ÷ÓÃÒ»ÏÂwaveInReset£¬ÕâÑù¿ÉÒÔÇåµôÉĞÔÚµÈ´ıÂ¼ÒôµÄ»º³åÇø
+    if (!Recording) {
+        return;
+    }
+    Recording = false;
+    waveInReset(hWaveIn); // è°ƒç”¨ä¸€ä¸‹waveInResetï¼Œè¿™æ ·å¯ä»¥æ¸…æ‰å°šåœ¨ç­‰å¾…å½•éŸ³çš„ç¼“å†²åŒº
 }
 
 void RecordAudio::Close()
 {
-	if (!isInit) {
-		return;
-	}
-	if (Recording) {
-		Stop();
-	}
-	isInit = false;
-	delete[] pBuffer1;
-	pBuffer1 = nullptr;
-	delete[] pBuffer2;
-	pBuffer2 = nullptr;
-	waveInClose(hWaveIn);
+    if (!isInit) {
+        return;
+    }
+    if (Recording) {
+        Stop();
+    }
+    isInit = false;
+    delete[] pBuffer1;
+    pBuffer1 = nullptr;
+    delete[] pBuffer2;
+    pBuffer2 = nullptr;
+    waveInClose(hWaveIn);
 }
 
 bool RecordAudio::IsRecording()
 {
-	return Recording;
+    return Recording;
 }
 
 void RecordAudio::setBuffsize(int NewSize)
 {
-	bufsize = NewSize;
+    bufsize = NewSize;
 }
 
 void RecordAudio::setFormatTag(WORD tag)
 {
-	if (isInit) return;
-	waveform.wFormatTag = tag;
+    if (isInit) return;
+    waveform.wFormatTag = tag;
 }
 
 void RecordAudio::setSamplesPerSec(DWORD samplesPerSec)
 {
-	if (isInit) return;
-	waveform.nSamplesPerSec = samplesPerSec;
-	waveform.nAvgBytesPerSec = waveform.nBlockAlign * waveform.nSamplesPerSec;
+    if (isInit) return;
+    waveform.nSamplesPerSec = samplesPerSec;
+    waveform.nAvgBytesPerSec = waveform.nBlockAlign * waveform.nSamplesPerSec;
 }
 
 void RecordAudio::setBitsPerSample(WORD bit)
 {
-	if (isInit) return;
-	waveform.wBitsPerSample = bit;
-	waveform.nBlockAlign = (waveform.wBitsPerSample * waveform.nChannels) / 8;  // ¿é¶ÔÆë
-	waveform.nAvgBytesPerSec = waveform.nBlockAlign * waveform.nSamplesPerSec;  // ´«ÊäËÙÂÊ
+    if (isInit) return;
+    waveform.wBitsPerSample = bit;
+    waveform.nBlockAlign = (waveform.wBitsPerSample * waveform.nChannels) / 8;  // å—å¯¹é½
+    waveform.nAvgBytesPerSec = waveform.nBlockAlign * waveform.nSamplesPerSec;  // ä¼ è¾“é€Ÿç‡
 
 }
 
 std::vector<WAVEINCAPS> RecordAudio::GetAllDevs()
 {
-	std::vector<WAVEINCAPS> devs;
-	UINT devsnum = waveInGetNumDevs();
-	if (devsnum == 0) {
-		return std::vector<WAVEINCAPS>();
-	}
-	else {
-		for (UINT i = 0; i < devsnum; i++) {
-			WAVEINCAPS waveIncaps;
-			MMRESULT _ = waveInGetDevCaps(i, &waveIncaps, sizeof(WAVEINCAPS));
-			devs.push_back(waveIncaps);
-		}
-		return devs;
-	}
-	
+    std::vector<WAVEINCAPS> devs;
+    UINT devsnum = waveInGetNumDevs();
+    if (devsnum == 0) {
+        return std::vector<WAVEINCAPS>();
+    }
+    else {
+        for (UINT i = 0; i < devsnum; i++) {
+            WAVEINCAPS waveIncaps;
+            MMRESULT _ = waveInGetDevCaps(i, &waveIncaps, sizeof(WAVEINCAPS));
+            devs.push_back(waveIncaps);
+        }
+        return devs;
+    }
+    
 }
 
 int RecordAudio::GetDevsNum()
 {
-	return waveInGetNumDevs();
+    return waveInGetNumDevs();
 }
 
 WAVEINCAPS RecordAudio::GetDevsFromId(UINT id)
 {
-	WAVEINCAPS waveIncaps;
-	MMRESULT _ = waveInGetDevCaps(id, &waveIncaps, sizeof(WAVEINCAPS));
-	return waveIncaps;
+    WAVEINCAPS waveIncaps;
+    MMRESULT _ = waveInGetDevCaps(id, &waveIncaps, sizeof(WAVEINCAPS));
+    return waveIncaps;
 }
 
 void RecordAudio::setDevive(UINT num)
 {
-	// TODO£º¶ÁÈ¡Éè±¸ÊıÁ¿£¬ÅĞ¶ÏÊÇ·ñÔÚ¸ÃÖµÖ®Àà
-	currentDeviceNum = num;
+    // TODOï¼šè¯»å–è®¾å¤‡æ•°é‡ï¼Œåˆ¤æ–­æ˜¯å¦åœ¨è¯¥å€¼ä¹‹ç±»
+    currentDeviceNum = num;
 }
 
 WAVEINCAPS RecordAudio::getCurrentDevice()
 {
-	auto allDevs = GetAllDevs();
-	return allDevs[currentDeviceNum];
+    auto allDevs = GetAllDevs();
+    return allDevs[currentDeviceNum];
 }
 
 UINT RecordAudio::getCurrentDeviceNum()
 {
-	return currentDeviceNum;
+    return currentDeviceNum;
 }
 
-void CALLBACK RecordAudio::callback(HWAVEIN   hwi,                              // Éè±¸¾ä±ú
-	UINT      uMsg,							   // ÏûÏ¢
-	DWORD_PTR dwInstance,					   // ¶ÔÏó this
-	DWORD_PTR dwParam1,						   // ²ÎÊı1
-	DWORD_PTR dwParam2)						   // ²ÎÊı2
+void CALLBACK RecordAudio::callback(HWAVEIN   hwi,                              // è®¾å¤‡å¥æŸ„
+    UINT      uMsg,							   // æ¶ˆæ¯
+    DWORD_PTR dwInstance,					   // å¯¹è±¡ this
+    DWORD_PTR dwParam1,						   // å‚æ•°1
+    DWORD_PTR dwParam2)						   // å‚æ•°2
 {
-	((RecordAudio*)dwInstance)->WaveInProcess(hwi, uMsg, dwInstance, dwParam1, dwParam2);
+    ((RecordAudio*)dwInstance)->WaveInProcess(hwi, uMsg, dwInstance, dwParam1, dwParam2);
 }
 void RecordAudio::WaveInProcess(HWAVEIN hwi, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-	// µ±Ç°¶ÔÏó
-	RecordAudio* _this = (RecordAudio*)dwInstance;
-	// »ñÈ¡ÒôÆµÍ·
-	PWAVEHDR pwhdr = (PWAVEHDR)dwParam1;
-	// ´¦ÀíÏûÏ¢
-	switch (uMsg)
-	{
-	case WIM_OPEN:      // ´ò¿ªÂ¼ÒôÉè±¸
-	{
-		//printf("³É¹¦´ò¿ªÉè±¸..\n");		// ÕâÀïµ÷ÓÃÒ»¸ö×Ô¶¨ÒåÊÂ¼ş
-		if (_this->OpenRecordDevice) _this->OpenRecordDevice();
-		break;
-	}
-	case WIM_DATA:      // »º³åÇøÒÑÂú ±íÊ¾ÎÒÒÑ¾­Â¼ÖÆÁËÖ¸¶¨µÄ´óĞ¡µÄÒôÆµÁË
-	{
-		//ÕâÀïÀ©³ä»º³åÇø
-		DWORD bytrecd = pwhdr->dwBytesRecorded;	// ¾àÀëÉÏ´«»º³åÇøÒÑÂúµ½Õâ´ÎÂ¼ÖÆµÄÒôÆµµÄ´óĞ¡
+    // å½“å‰å¯¹è±¡
+    RecordAudio* _this = (RecordAudio*)dwInstance;
+    // è·å–éŸ³é¢‘å¤´
+    PWAVEHDR pwhdr = (PWAVEHDR)dwParam1;
+    // å¤„ç†æ¶ˆæ¯
+    switch (uMsg)
+    {
+    case WIM_OPEN:      // æ‰“å¼€å½•éŸ³è®¾å¤‡
+    {
+        //printf("æˆåŠŸæ‰“å¼€è®¾å¤‡..\n");		// è¿™é‡Œè°ƒç”¨ä¸€ä¸ªè‡ªå®šä¹‰äº‹ä»¶
+        if (_this->OpenRecordDevice) _this->OpenRecordDevice();
+        break;
+    }
+    case WIM_DATA:      // ç¼“å†²åŒºå·²æ»¡ è¡¨ç¤ºæˆ‘å·²ç»å½•åˆ¶äº†æŒ‡å®šçš„å¤§å°çš„éŸ³é¢‘äº†
+    {
+        //è¿™é‡Œæ‰©å……ç¼“å†²åŒº
+        DWORD bytrecd = pwhdr->dwBytesRecorded;	// è·ç¦»ä¸Šä¼ ç¼“å†²åŒºå·²æ»¡åˆ°è¿™æ¬¡å½•åˆ¶çš„éŸ³é¢‘çš„å¤§å°
 
-		// ÕâÀïÔÙµ÷ÓÃÒ»´Î×Ô¶¨Òåº¯Êı ½«Â¼ÖÆµÄÒôÆµÊı¾İ´«µİ³öÈ¥
-		// ÒôÆµÊı¾İ:pwhdr->lpData£¬ ÒôÆµµÄ´óĞ¡: bytrecd
-		if (_this->HasBufferStream) _this->HasBufferStream(pwhdr->lpData, bytrecd);			//bytrecd¿ÉÄÜÎª0 ÒòÎªÓĞÁ½¸öÉùµÀ
+        // è¿™é‡Œå†è°ƒç”¨ä¸€æ¬¡è‡ªå®šä¹‰å‡½æ•° å°†å½•åˆ¶çš„éŸ³é¢‘æ•°æ®ä¼ é€’å‡ºå»
+        // éŸ³é¢‘æ•°æ®:pwhdr->lpDataï¼Œ éŸ³é¢‘çš„å¤§å°: bytrecd
+        if (_this->HasBufferStream) _this->HasBufferStream(pwhdr->lpData, bytrecd);			//bytrecdå¯èƒ½ä¸º0 å› ä¸ºæœ‰ä¸¤ä¸ªå£°é“
 
-		if (_this->Recording) {
-			waveInAddBuffer(hwi, pwhdr, sizeof(WAVEHDR));
-		}
-		break;
-	}
-	case WIM_CLOSE:     // ¹Ø±ÕÂ¼ÒôÉè±¸
-	{
-		if(_this->CloseRecordDevice) _this->CloseRecordDevice();
-		break;
-	}
-	default:
-		break;
-	}
+        if (_this->Recording) {
+            waveInAddBuffer(hwi, pwhdr, sizeof(WAVEHDR));
+        }
+        break;
+    }
+    case WIM_CLOSE:     // å…³é—­å½•éŸ³è®¾å¤‡
+    {
+        if(_this->CloseRecordDevice) _this->CloseRecordDevice();
+        break;
+    }
+    default:
+        break;
+    }
 }
 void RecordAudio::onOpenRecordDeviceEvent(OpenRecordDeviceEvent e)
 {
-	OpenRecordDevice = e;
+    OpenRecordDevice = e;
 }
 void RecordAudio::onHasBufferStreamEvent(HasBufferStreamEvent e)
 {
-	HasBufferStream = e;
+    HasBufferStream = e;
 }
 void RecordAudio::onCloseRecordDeviceEvent(CloseRecordDeviceEvent e)
 {
-	CloseRecordDevice = e;
+    CloseRecordDevice = e;
 }

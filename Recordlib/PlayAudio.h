@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #ifndef PLAYAUDIO_H
 #define PLAYAUDIO_H
@@ -13,115 +13,115 @@
 
 class PlayAudio {
 public:
-	/// <summary>
-	/// ¿ªÆô²¥·ÅÉè±¸Ê±´¥·¢
-	/// </summary>
-	using OpenPlayDeviceEvent = std::function<void()>;
-	/// <summary>
-	/// µ±Ç°»º³åÇøµÄÊı¾İ²¥·ÅÍê³Éµ÷ÓÃµÄÊÂ¼ş
-	/// </summary>
-	using PlayDoneEvent = std::function<void()>;
-	/// <summary>
-	/// ±íÊ¾ĞèÒªĞ´ÈëÊı¾İ£¬AB»º³åÇø,A»º³åÇø²¥·ÅÍê³ÉÁË£¬ÏÖÔÚ¿ªÊ¼²¥·ÅB»º³åÇø,´ËÊ±»Øµ÷ÓÃ´ËÊÂ¼şÈÃÓÃ»§ÏòA»º³åÇøÖĞĞ´ÈëÊı¾İ
-	/// </summary>
-	using NeedWriteDataEvent = std::function<bool(LPSTR,int*)>;
-	/// <summary>
-	/// ²¥·ÅÉè±¸±»¹Ø±ÕÁË ºó´¥·¢
-	/// </summary>
-	using ClosePlayDeviceEvent = std::function<void()>;
+    /// <summary>
+    /// å¼€å¯æ’­æ”¾è®¾å¤‡æ—¶è§¦å‘
+    /// </summary>
+    using OpenPlayDeviceEvent = std::function<void()>;
+    /// <summary>
+    /// å½“å‰ç¼“å†²åŒºçš„æ•°æ®æ’­æ”¾å®Œæˆè°ƒç”¨çš„äº‹ä»¶
+    /// </summary>
+    using PlayDoneEvent = std::function<void()>;
+    /// <summary>
+    /// è¡¨ç¤ºéœ€è¦å†™å…¥æ•°æ®ï¼ŒABç¼“å†²åŒº,Aç¼“å†²åŒºæ’­æ”¾å®Œæˆäº†ï¼Œç°åœ¨å¼€å§‹æ’­æ”¾Bç¼“å†²åŒº,æ­¤æ—¶å›è°ƒç”¨æ­¤äº‹ä»¶è®©ç”¨æˆ·å‘Aç¼“å†²åŒºä¸­å†™å…¥æ•°æ®
+    /// </summary>
+    using NeedWriteDataEvent = std::function<bool(LPSTR,int*)>;
+    /// <summary>
+    /// æ’­æ”¾è®¾å¤‡è¢«å…³é—­äº† åè§¦å‘
+    /// </summary>
+    using ClosePlayDeviceEvent = std::function<void()>;
 public:
-	PlayAudio();
-	~PlayAudio();
-	/// <summary>
-	/// ³õÊ¼»¯
-	/// </summary>
-	void Init();
-	/// <summary>
-	/// Á¢¼´¹Ø±Õ Èç¹ûÒª½Ó×ÅÊ¹ÓÃÕâ¸öÀà µÃÖØĞÂ³õÊ¼»¯
-	/// </summary>
-	void Close();
-	/// <summary>
-	/// ÔÚ±¾´Î»º³åÇø²¥·ÅÍê³ÉÖ®ºó¹Ø±Õ
-	/// </summary>
-	void CloseInPlayDoneAfter();
+    PlayAudio();
+    ~PlayAudio();
+    /// <summary>
+    /// åˆå§‹åŒ–
+    /// </summary>
+    void Init();
+    /// <summary>
+    /// ç«‹å³å…³é—­ å¦‚æœè¦æ¥ç€ä½¿ç”¨è¿™ä¸ªç±» å¾—é‡æ–°åˆå§‹åŒ–
+    /// </summary>
+    void Close();
+    /// <summary>
+    /// åœ¨æœ¬æ¬¡ç¼“å†²åŒºæ’­æ”¾å®Œæˆä¹‹åå…³é—­
+    /// </summary>
+    void CloseInPlayDoneAfter();
 
-	// ÔİÍ£²¥·Å
-	void Stop();
-	// ³õÊ¼»¯ºó²¥·ÅºÍÔİÍ£ºó²¥·Å
-	void Play();
-	// ÊÇ·ñÊÇÔİÍ£²¥·Å×´Ì¬
-	bool IsPause();
-	// ÉèÖÃ»º³åÇø´óĞ¡
-	void setBuffSize(int size);
-	// »ñÈ¡»º³åÇø´óĞ¡
-	int getBuffSize();
-	// ÉèÖÃ²¥·ÅµÄÒôÆµµÄ¸ñÊ½ Ä¬ÈÏ:WAVE_FORMAT_PCM
-	void setFormatTag(WORD);
-	// ÉèÖÃ²ÉÑùÂÊ Ä¬ÈÏ:44100
-	void setSamplesPerSec(DWORD);
-	// ÉèÖÃÂ¼ÖÆÒôÆµµÄ¾«¶È Ä¬ÈÏ:16
-	void setBitsPerSample(WORD);
-	/// <summary>
-	/// ÏòÊä³öÁ÷ÖĞĞ´ÈëÒôÆµÊı¾İ
-	/// </summary>
-	/// <param name="data">Êı¾İ</param>
-	/// <param name="size">Êı¾İÖĞ°üº¬ÒôÆµ×Ö½ÚµÄ´óĞ¡</param>
-	/// <returns>³É¹¦Ğ´ÈëµÄÊı¾İ´óĞ¡</returns>
-	int WriteAudioData(LPSTR data, int size);
-	//ÉèÖÃµ±Ç°Ê¹ÓÃµÄÂó¿Ë·çÉè±¸ from Num
-	void setDevive(UINT);
-	//»ñÈ¡µ±Ç°Ê¹ÓÃµÄÂó¿Ë·çÉè±¸
-	WAVEOUTCAPS getCurrentDevice();
-	//»ñÈ¡µ±Ç°Ê¹ÓÃµÄÂó¿Ë·çÉè±¸µÄ±àºÅ
-	UINT getCurrentDeviceNum();
+    // æš‚åœæ’­æ”¾
+    void Stop();
+    // åˆå§‹åŒ–åæ’­æ”¾å’Œæš‚åœåæ’­æ”¾
+    void Play();
+    // æ˜¯å¦æ˜¯æš‚åœæ’­æ”¾çŠ¶æ€
+    bool IsPause();
+    // è®¾ç½®ç¼“å†²åŒºå¤§å°
+    void setBuffSize(int size);
+    // è·å–ç¼“å†²åŒºå¤§å°
+    int getBuffSize();
+    // è®¾ç½®æ’­æ”¾çš„éŸ³é¢‘çš„æ ¼å¼ é»˜è®¤:WAVE_FORMAT_PCM
+    void setFormatTag(WORD);
+    // è®¾ç½®é‡‡æ ·ç‡ é»˜è®¤:44100
+    void setSamplesPerSec(DWORD);
+    // è®¾ç½®å½•åˆ¶éŸ³é¢‘çš„ç²¾åº¦ é»˜è®¤:16
+    void setBitsPerSample(WORD);
+    /// <summary>
+    /// å‘è¾“å‡ºæµä¸­å†™å…¥éŸ³é¢‘æ•°æ®
+    /// </summary>
+    /// <param name="data">æ•°æ®</param>
+    /// <param name="size">æ•°æ®ä¸­åŒ…å«éŸ³é¢‘å­—èŠ‚çš„å¤§å°</param>
+    /// <returns>æˆåŠŸå†™å…¥çš„æ•°æ®å¤§å°</returns>
+    int WriteAudioData(LPSTR data, int size);
+    //è®¾ç½®å½“å‰ä½¿ç”¨çš„éº¦å…‹é£è®¾å¤‡ from Num
+    void setDevive(UINT);
+    //è·å–å½“å‰ä½¿ç”¨çš„éº¦å…‹é£è®¾å¤‡
+    WAVEOUTCAPS getCurrentDevice();
+    //è·å–å½“å‰ä½¿ç”¨çš„éº¦å…‹é£è®¾å¤‡çš„ç¼–å·
+    UINT getCurrentDeviceNum();
 public:
-	// »ñÈ¡ËùÓĞ²¥·ÅÉè±¸
-	static std::vector<WAVEOUTCAPS> GetAllDevs();
-	/**
-	 * @brief »ñÈ¡²¨ĞÎÊä³öÉè±¸µÄÊıÁ¿
-	 * @return 
-	 */
-	static int GetDevsNum();
-	/**
-	 * @brief »ñÈ¡Ò»¸öÖ¸¶¨±àºÅµÄÂó¿Ë·ç¶ÔÏó
-	 * @param id
-	 * @return
-	 */
-	static WAVEOUTCAPS GetDevsFromId(UINT id);
+    // è·å–æ‰€æœ‰æ’­æ”¾è®¾å¤‡
+    static std::vector<WAVEOUTCAPS> GetAllDevs();
+    /**
+     * @brief è·å–æ³¢å½¢è¾“å‡ºè®¾å¤‡çš„æ•°é‡
+     * @return 
+     */
+    static int GetDevsNum();
+    /**
+     * @brief è·å–ä¸€ä¸ªæŒ‡å®šç¼–å·çš„éº¦å…‹é£å¯¹è±¡
+     * @param id
+     * @return
+     */
+    static WAVEOUTCAPS GetDevsFromId(UINT id);
 
 private:
-	static void CALLBACK callback(
-		HWAVEOUT  hwo,								// Éè±¸¾ä±ú
-		UINT      uMsg,								// ÏûÏ¢
-		DWORD_PTR dwInstance,						// ¶ÔÏó
-		DWORD_PTR dwParam1,							// ²ÎÊı1
-		DWORD_PTR dwParam2);						// ²ÎÊı2
-	void WaveOutProcess(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
+    static void CALLBACK callback(
+        HWAVEOUT  hwo,								// è®¾å¤‡å¥æŸ„
+        UINT      uMsg,								// æ¶ˆæ¯
+        DWORD_PTR dwInstance,						// å¯¹è±¡
+        DWORD_PTR dwParam1,							// å‚æ•°1
+        DWORD_PTR dwParam2);						// å‚æ•°2
+    void WaveOutProcess(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
 private:
-	HWAVEOUT hWaveOut{};							// ´ò¿ªµÄÒ»¸öÒôÆµÊä³öÉè±¸
-	WAVEFORMATEX waveform{};
-	WAVEHDR wHdr1{};
+    HWAVEOUT hWaveOut{};							// æ‰“å¼€çš„ä¸€ä¸ªéŸ³é¢‘è¾“å‡ºè®¾å¤‡
+    WAVEFORMATEX waveform{};
+    WAVEHDR wHdr1{};
 
-	char* pBufferA = nullptr;						// Òª²¥·ÅµÄÒôÆµ×Ö½Ú»º´æ´¦ »º³åÇøA
-	char* pBufferB = nullptr;						// Òª²¥·ÅµÄÒôÆµ×Ö½Ú»º´æ´¦ »º³åÇøB
-	bool isInit = false;							// ÊÇ·ñ³õÊ¼»¯
-	bool isPause = false;							// ÕıÔÚ²¥·Å
-	bool isreset = false;
+    char* pBufferA = nullptr;						// è¦æ’­æ”¾çš„éŸ³é¢‘å­—èŠ‚ç¼“å­˜å¤„ ç¼“å†²åŒºA
+    char* pBufferB = nullptr;						// è¦æ’­æ”¾çš„éŸ³é¢‘å­—èŠ‚ç¼“å­˜å¤„ ç¼“å†²åŒºB
+    bool isInit = false;							// æ˜¯å¦åˆå§‹åŒ–
+    bool isPause = false;							// æ­£åœ¨æ’­æ”¾
+    bool isreset = false;
 
-	int buffsize = 1024 * 300;						// ²¥·Å»º´æ´óĞ¡ ²¥·Å³¤¶È(±ÈÈç²¥·Å5s£¬µ«ÊÇbufµÄÊı¾İÖ»¹»²¥·Å2s,Ö®ºóµÄÊı¾İÊÇ0,ÄÇÃ´½«²¥·Å2sºóÃ»ÓĞÉùÒô,Ö±µ½ÔÙ¹ı3sºóµ÷ÓÃcallback)
-	int buffNUM = 0;
-	UINT currentDeviceNum = WAVE_MAPPER;			// Ê¹ÓÃÉè±¸µÄ±àºÅ
+    int buffsize = 1024 * 300;						// æ’­æ”¾ç¼“å­˜å¤§å° æ’­æ”¾é•¿åº¦(æ¯”å¦‚æ’­æ”¾5sï¼Œä½†æ˜¯bufçš„æ•°æ®åªå¤Ÿæ’­æ”¾2s,ä¹‹åçš„æ•°æ®æ˜¯0,é‚£ä¹ˆå°†æ’­æ”¾2såæ²¡æœ‰å£°éŸ³,ç›´åˆ°å†è¿‡3såè°ƒç”¨callback)
+    int buffNUM = 0;
+    UINT currentDeviceNum = WAVE_MAPPER;			// ä½¿ç”¨è®¾å¤‡çš„ç¼–å·
 public:
-	void onOpenPlayDevice(OpenPlayDeviceEvent e);
-	void onPlayDone(PlayDoneEvent e);
-	void onNeedWriteData(NeedWriteDataEvent e);
-	void onClosePlayDevice(ClosePlayDeviceEvent e);
+    void onOpenPlayDevice(OpenPlayDeviceEvent e);
+    void onPlayDone(PlayDoneEvent e);
+    void onNeedWriteData(NeedWriteDataEvent e);
+    void onClosePlayDevice(ClosePlayDeviceEvent e);
 
 private:
-	OpenPlayDeviceEvent OpenPlayDevice = NULL;
-	PlayDoneEvent PlayDone = NULL;
-	NeedWriteDataEvent NeedWriteData = NULL;
-	ClosePlayDeviceEvent ClosePlayDevice = NULL;
+    OpenPlayDeviceEvent OpenPlayDevice = NULL;
+    PlayDoneEvent PlayDone = NULL;
+    NeedWriteDataEvent NeedWriteData = NULL;
+    ClosePlayDeviceEvent ClosePlayDevice = NULL;
 };
 
 #endif // !PLAYAUDIO_H
