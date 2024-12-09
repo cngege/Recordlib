@@ -32,7 +32,7 @@ public:
     /// <summary>
     /// 当录制的数据撑满了缓冲区时触发,它告诉前端用户赶紧将录制的数据拿走,接下来的录制将覆盖掉这部分的数据
     /// </summary>
-    using HasBufferStreamEvent = std::function<void(LPSTR, DWORD)>;
+    using HasBufferStreamEvent = std::function<void(const char*, ULONG)>;
     /// <summary>
     /// 由设备事件发出的停止录音消息,一般在用户手动调用Stop()或Close() 后触发
     /// </summary>
@@ -71,11 +71,11 @@ public:
     // 设置缓冲区大小, 当录制的数据到达这个大小时,将自动调用回调函数
     void setBuffsize(int);
     // 设置录制音频的格式 默认:WAVE_FORMAT_PCM
-    void setFormatTag(WORD);
+    void setFormatTag(USHORT);
     // 设置采样率 默认:8000
-    void setSamplesPerSec(DWORD);
+    void setSamplesPerSec(ULONG);
     // 设置录制音频的精度 默认:16
-    void setBitsPerSample(WORD);
+    void setBitsPerSample(USHORT);
 
     // 获取所有麦克风设备
     static std::vector<WAVEINCAPS> GetAllDevs();

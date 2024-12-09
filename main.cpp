@@ -28,7 +28,7 @@ void RecordToFile() {
         file1.open("MyAudio.Audio", std::ios::binary);
     std::cout << "回调: 打开设备" << std::endl;
         });
-    R.onHasBufferStreamEvent([&file1](LPSTR Stream, DWORD size) {
+    R.onHasBufferStreamEvent([&file1](const char* Stream, ULONG size) {
         file1.write(Stream, size);
     std::cout << "回调: 录制中... 存储了 " << size << " 字节" << std::endl;
         });
@@ -120,10 +120,10 @@ void StartTcpServer() {
         return;
     }
 
-    R.onHasBufferStreamEvent([&s](LPSTR Stream, DWORD size) {
+    R.onHasBufferStreamEvent([&s](const char* Stream, ULONG size) {
         if (size == 0) return;
         for (auto& c : s.GetALLClient()) {
-            s.sendData(c.clientSocket, Stream, size);
+            s.sendData(c.clientSocket, const_cast<char*>(Stream), size);
         }
     });
 
@@ -183,7 +183,7 @@ void StartTcpClient() {
         return;
     }
 
-    R.onHasBufferStreamEvent([&c](LPSTR Stream, DWORD size) {
+    R.onHasBufferStreamEvent([&c](const char* Stream, ULONG size) {
         if (size == 0) return;
         if(!c.Connected) return;
         c.sendData((char*)Stream, size);
@@ -256,7 +256,7 @@ int main()
     }
 }
 
-
+#include <mmreg.h>
 void RecordToWavFile() {
     size_t pcmSize = 0;
     std::cout << "录制" << std::endl;
@@ -270,7 +270,7 @@ void RecordToWavFile() {
         file1.seekp(44);
         std::cout << "回调: 打开设备" << std::endl;
     });
-    R.onHasBufferStreamEvent([&file1,&pcmSize](LPSTR Stream, DWORD size) {
+    R.onHasBufferStreamEvent([&file1,&pcmSize](const char* Stream, ULONG size) {
         file1.write(Stream, size);
         pcmSize += size;
         std::cout << "回调: 录制中... 存储了 " << size << " 字节" << std::endl;
@@ -285,7 +285,7 @@ void RecordToWavFile() {
             //前 4 个字节是 “RIFF” 字符串
             memcpy_s(header, 4, std::string("RIFF").data(), 4);
             // 紧接着的 4 个字节表示整个文件的大小减去 8 字节
-            *reinterpret_cast<UINT*>(header + 4) = pcmSize + 44 - 8;
+            *reinterpret_cast<UINT*>(header + 4) = static_cast<UINT>(pcmSize + 44 - 8);
             //最后 4 个字节是 “WAVE” 字符串
             memcpy_s(header + 8, 4, std::string("WAVE").data(), 4);
         }
@@ -313,7 +313,7 @@ void RecordToWavFile() {
             //36 - 39 字节是 “data” 字符串，这是数据块（Data chunk）的标志，表明接下来是音频数据部分。
             memcpy_s(header + 36, 4, std::string("data").data(), 4);
             //40 - 43 字节表示音频数据的大小，单位是字节，这个大小不包括文件头部分。
-            *reinterpret_cast<UINT*>(header + 40) = pcmSize;
+            *reinterpret_cast<UINT*>(header + 40) = static_cast<UINT>(pcmSize);
         }
 
         file1.seekp(0);
@@ -321,7 +321,7 @@ void RecordToWavFile() {
         file1.close();
         std::cout << "回调: 关闭设备" << std::endl;
     });
-    
+    R.setFormatTag(WAVE_FORMAT_PCM);
     R.Init();
     R.Record();
     auto _ = getchar();

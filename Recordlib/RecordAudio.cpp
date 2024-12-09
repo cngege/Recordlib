@@ -143,20 +143,20 @@ void RecordAudio::setBuffsize(int NewSize)
     bufsize = NewSize;
 }
 
-void RecordAudio::setFormatTag(WORD tag)
+void RecordAudio::setFormatTag(USHORT tag)
 {
     if (isInit) return;
     waveform.wFormatTag = tag;
 }
 
-void RecordAudio::setSamplesPerSec(DWORD samplesPerSec)
+void RecordAudio::setSamplesPerSec(ULONG samplesPerSec)
 {
     if (isInit) return;
     waveform.nSamplesPerSec = samplesPerSec;
     waveform.nAvgBytesPerSec = waveform.nBlockAlign * waveform.nSamplesPerSec;
 }
 
-void RecordAudio::setBitsPerSample(WORD bit)
+void RecordAudio::setBitsPerSample(USHORT bit)
 {
     if (isInit) return;
     waveform.wBitsPerSample = bit;
